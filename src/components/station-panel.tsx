@@ -76,12 +76,13 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
   const setUserPos = useAppStore((s) => s.setUserPos);
   const userPos = useAppStore((s) => s.userPos);
   const mapView = useAppStore((s) => s.mapView);
+  const mapGesture = useAppStore((s) => s.mapGesture);
   const hasOrigin = Boolean(findCity(query) || findCity(filters.place) || userPos);
   const [reverseLabel, setReverseLabel] = useState("");
-  const [pillCleared, setPillCleared] = useState(false);
-  const mapAtClear = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
+  const [pillCleared, setPillCleared] = useState(true);
+  const lastMapGesture = useRef(mapGesture);
   useEffect(() => {
-    if (!overlay) return;
+    if (!overlay || pillCleared) return;
     const { lat, lng, zoom } = mapView;
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
     let alive = true;
@@ -95,16 +96,18 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
       alive = false;
       window.clearTimeout(timer);
     };
-  }, [overlay, mapView.lat, mapView.lng, mapView.zoom]);
+  }, [overlay, pillCleared, mapView.lat, mapView.lng, mapView.zoom]);
 
   useEffect(() => {
-    if (!pillCleared || !mapAtClear.current) return;
-    const a = mapAtClear.current;
-    if (a.lat !== mapView.lat || a.lng !== mapView.lng || a.zoom !== mapView.zoom) {
-      setPillCleared(false);
-      mapAtClear.current = null;
-    }
-  }, [pillCleared, mapView.lat, mapView.lng, mapView.zoom]);
+    if (!overlay || mapGesture === lastMapGesture.current) return;
+    lastMapGesture.current = mapGesture;
+    setPillCleared(false);
+  }, [overlay, mapGesture]);
+
+  useEffect(() => {
+    if (!overlay || !userPos) return;
+    setPillCleared(false);
+  }, [overlay, userPos]);
 
   const pillValue =
     filters.place || query || (overlay && !pillCleared ? reverseLabel : "");
@@ -120,10 +123,8 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
             if (place.trim()) {
               setUserPos(null);
               setPillCleared(false);
-              mapAtClear.current = null;
             } else {
               setPillCleared(true);
-              mapAtClear.current = { lat: mapView.lat, lng: mapView.lng, zoom: mapView.zoom };
             }
           }}
           placeholder={t("placePh")}
