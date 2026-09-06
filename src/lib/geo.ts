@@ -77,7 +77,7 @@ export function isFiniteLatLng(lat: unknown, lng: unknown): lat is number {
   );
 }
 
-/** Distance along a polyline to the nearest vertex (km from start). */
+/** Distance along a polyline to the nearest projected point (km from start). */
 export function alongRouteKm(p: LatLng, line: LatLng[]): number {
   if (line.length === 0) return Number.POSITIVE_INFINITY;
   if (line.length === 1) return 0;
@@ -87,14 +87,21 @@ export function alongRouteKm(p: LatLng, line: LatLng[]): number {
     acc += haversineKm(line[i - 1]!, line[i]!);
     prefix.push(acc);
   }
-  let bestI = 0;
+  let bestAlong = 0;
   let bestD = Number.POSITIVE_INFINITY;
-  for (let i = 0; i < line.length; i++) {
-    const d = haversineKm(p, line[i]!);
+  for (let i = 0; i < line.length - 1; i++) {
+    const a = line[i]!;
+    const b = line[i + 1]!;
+    const ab = haversineKm(a, b);
+    const ap = haversineKm(a, p);
+    const bp = haversineKm(b, p);
+    const t = ab < 0.05 ? (ap <= bp ? 0 : 1) : Math.max(0, Math.min(1, (ap ** 2 + ab ** 2 - bp ** 2) / (2 * ab * ab)));
+    const projected = { lat: a.lat + t * (b.lat - a.lat), lng: a.lng + t * (b.lng - a.lng) };
+    const d = haversineKm(p, projected);
     if (d < bestD) {
       bestD = d;
-      bestI = i;
+      bestAlong = (prefix[i] ?? 0) + t * ab;
     }
   }
-  return prefix[bestI] ?? 0;
+  return bestAlong;
 }

@@ -299,6 +299,7 @@ export function SearchAndFilters({
   const setListSort = useAppStore((s) => s.setListSort);
   const filtersOpen = useAppStore((s) => s.filtersOpen);
   const setFiltersOpen = useAppStore((s) => s.setFiltersOpen);
+  const routePath = useAppStore((s) => s.routePath);
   return (
     <div className="shrink-0 space-y-1.5">
       <div className="flex items-center justify-between gap-2">
@@ -328,13 +329,13 @@ export function SearchAndFilters({
           <span className="sr-only">{t("sortBy")}</span>
           <select
             value={listSort}
-            onChange={(e) => setListSort(e.target.value as "distance" | "name" | "verified")}
+            onChange={(e) => setListSort(e.target.value as "distance" | "name" | "verified" | "along")}
             className="bl-tap h-11 appearance-none rounded-lg bg-transparent py-0 pr-6 pl-2.5 text-[13px] text-fg ring-1 ring-white/15"
           >
             <option value="distance">{t("sortBy")}</option>
             <option value="name">{t("sortName")}</option>
             <option value="verified">{t("sortVerified")}</option>
-            <option value="along">{t("alongRoute")}</option>
+            <option value="along" disabled={!routePath?.coords.length}>{t("alongRoute")}</option>
           </select>
         </label>
         <Chip active={filters.cassette} onClick={() => setFilters({ cassette: !filters.cassette })} label={t("ariaCassette")}>
@@ -390,10 +391,11 @@ function StationList({ stations }: { stations: Station[] }) {
   }, [stations, origin, bounds, listSort, routePath]);
 
   if (visible.length === 0) {
+    const filterEmpty = stations.length === 0;
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted">
-        <p className="text-sm">{t("emptyView")}</p>
-        <p className="text-xs">{t("emptyHint")}</p>
+        <p className="text-sm">{t(filterEmpty ? "emptyFilter" : "emptyView")}</p>
+        <p className="text-xs">{t(filterEmpty ? "emptyFilterHint" : "emptyHint")}</p>
       </div>
     );
   }
@@ -861,11 +863,27 @@ export function LocateButton({ iconOnly, floating }: { iconOnly?: boolean; float
   const setFilters = useAppStore((s) => s.setFilters);
   const setQuery = useAppStore((s) => s.setQuery);
   const [busy, setBusy] = useState(false);
+  const [geoMsg, setGeoMsg] = useState("");
+  const geoTimer = useRef<number | null>(null);
+  const geoAvailable = typeof navigator !== "undefined" && Boolean(navigator.geolocation);
+  useEffect(() => () => {
+    if (geoTimer.current != null) window.clearTimeout(geoTimer.current);
+  }, []);
+  function showGeoMessage(message: string) {
+    if (geoTimer.current != null) window.clearTimeout(geoTimer.current);
+    setGeoMsg(message);
+    geoTimer.current = window.setTimeout(() => setGeoMsg(""), 2800);
+  }
   return (
-    <button
+    <div className="relative inline-flex">
+      <button
       type="button"
       onClick={() => {
-        if (!navigator.geolocation || busy) return;
+        if (busy) return;
+        if (!geoAvailable) {
+          showGeoMessage(t("errGeoOff"));
+          return;
+        }
         setBusy(true);
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -874,7 +892,10 @@ export function LocateButton({ iconOnly, floating }: { iconOnly?: boolean; float
             setQuery("");
             setBusy(false);
           },
-          () => setBusy(false),
+          () => {
+            setBusy(false);
+            showGeoMessage(t("errGeoFail"));
+          },
           { enableHighAccuracy: true, timeout: 10000 },
         );
       }}
@@ -885,7 +906,9 @@ export function LocateButton({ iconOnly, floating }: { iconOnly?: boolean; float
         iconOnly || floating ? "w-11" : "px-3",
       )}
       aria-label={t("locate")}
+      aria-disabled={!geoAvailable}
       aria-busy={busy}
+      title={!geoAvailable ? t("errGeoOff") : t("locate")}
     >
       {busy ? (
         <Loader2 className="size-5 animate-spin" />
@@ -896,6 +919,12 @@ export function LocateButton({ iconOnly, floating }: { iconOnly?: boolean; float
       )}
       {iconOnly || floating ? null : <span className="ml-1.5 text-sm">{t("locate")}</span>}
     </button>
+      {geoMsg ? (
+        <span role="status" className="absolute top-full right-0 z-50 mt-2 w-max max-w-[15rem] rounded-lg bg-black/90 px-3 py-2 text-xs text-white shadow-lg">
+          {geoMsg}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
