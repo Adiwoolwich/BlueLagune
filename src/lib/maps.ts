@@ -1,6 +1,6 @@
 /** Navigation helpers. Destinations are GPS coords only — never a place-name search. */
 
-import { fullAddress, hasPreciseCoords, hasStreetAddress } from "./stations";
+import { isSensibleNavCoords } from "./geo";
 
 export function isMobileDevice(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -52,12 +52,12 @@ export function appleMapsUrl(lat: number, lng: number, _label?: string) {
  * opens a different dump station or fails entirely.
  */
 export function googleMapsWebUrl(lat: number, lng: number, _label?: string) {
-  const dest = encodeURIComponent(coords(lat, lng));
+  const dest = coords(lat, lng);
   return `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`;
 }
 
 export function wazeUrl(lat: number, lng: number) {
-  const dest = encodeURIComponent(coords(lat, lng));
+  const dest = coords(lat, lng);
   return `https://waze.com/ul?ll=${dest}&navigate=yes`;
 }
 
@@ -118,62 +118,18 @@ export function openGoogleMapsApp(lat: number, lng: number, label?: string) {
   openNavigationWeb(lat, lng, label);
 }
 
-export function geoAddressUrl(address: string) {
-  return `geo:0,0?q=${encodeURIComponent(address)}`;
-}
 
-export function appleMapsAddressUrl(address: string) {
-  return `https://maps.apple.com/?daddr=${encodeURIComponent(address)}&dirflg=d`;
-}
-
-export function googleMapsAddressUrl(address: string) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}&travelmode=driving`;
-}
-
-export function navTargetsAddress(address: string): NavTarget[] {
-  const targets: NavTarget[] = [];
-  if (isAndroid()) {
-    targets.push({ id: "system", label: "Installierte Navi-App wählen", href: geoAddressUrl(address) });
-  }
-  if (isIOS()) {
-    targets.push({ id: "apple", label: "Apple Karten", href: appleMapsAddressUrl(address) });
-  }
-  targets.push({ id: "google", label: "Google Maps", href: googleMapsAddressUrl(address) });
-  if (isIOS()) {
-    targets.push({ id: "geo", label: "Andere installierte App", href: geoAddressUrl(address) });
-  }
-  return targets;
-}
-
-export function openNavigationAddress(address: string) {
-  launchNav(googleMapsAddressUrl(address));
-}
-
-/** Open https in a new tab; app-schemes (geo:) in the same window so iOS/Android can hand off. */
+/** Navigate in the current document so app handoffs stay inside the user gesture. */
 export function launchNav(href: string) {
-  if (!href || href === "#") return;
-  if (/^https?:/i.test(href)) {
-    const w = window.open(href, "_blank", "noopener,noreferrer");
-    if (!w) window.location.assign(href);
-    return;
-  }
-  window.location.assign(href);
+  if (href && href !== "#") window.location.assign(href);
 }
 
 /** Precise coords preferred. Address-only if the street can be resolved. Never invents city-centroid coords. */
 export function navTargetsForPlace(place: {
-  lat?: number;
+/** Navigation targets require finite coordinates inside the DE/NL product area. */
   lng?: number;
   name?: string;
-  address?: string;
-  city?: string;
-  postalCode?: string;
 }): NavTarget[] {
-  if (hasPreciseCoords(place)) {
-    return navTargets(place.lat as number, place.lng as number, place.name);
-  }
-  if (hasStreetAddress(place)) {
-    return navTargetsAddress(fullAddress(place));
-  }
-  return [];
+  if (!isSensibleNavCoords(place.lat, place.lng)) return [];
+  return navTargets(place.lat, place.lng, place.name);
 }
