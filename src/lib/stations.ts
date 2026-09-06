@@ -7,6 +7,7 @@ import partD from "../data/stations-d.json";
 import partNl from "../data/stations-nl.json";
 import partE from "../data/stations-e.json";
 import partCc from "../data/stations-cc.json";
+import partF from "../data/stations-f.json";
 
 export { CITIES, findCity };
 export type { City };
@@ -307,6 +308,7 @@ export const STATIONS: Station[] = [
   ...(partNl as Station[]),
   ...(partE as Station[]),
   ...(partCc as Station[]),
+  ...(partF as Station[]),
 ];
 
 /** Cassette/combo/municipal/greywater dumps (excludes CamperClean overlay). */
