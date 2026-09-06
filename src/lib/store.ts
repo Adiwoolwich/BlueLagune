@@ -91,6 +91,7 @@ type AppState = {
   corridorKm: number;
   bounds: MapBounds | null;
   mapView: MapView;
+  mapGesture: number;
   panel: "list" | "detail" | "saved" | "route" | "add";
   extraStations: Station[];
   sheet: "peek" | "mid" | "full";
@@ -113,6 +114,7 @@ type AppState = {
   setCorridorKm: (km: number) => void;
   setBounds: (b: MapBounds | null) => void;
   setMapView: (v: MapView) => void;
+  markMapGesture: () => void;
   setPanel: (p: AppState["panel"]) => void;
   setSheet: (s: AppState["sheet"]) => void;
   setMapLabels: (on: boolean) => void;
@@ -144,6 +146,7 @@ export const useAppStore = create<AppState>()(
       corridorKm: 25,
       bounds: null,
       mapView: { lat: 51.16, lng: 10.45, zoom: 6 },
+      mapGesture: 0,
       panel: "list",
       extraStations: [],
       sheet: "mid",
@@ -183,6 +186,7 @@ export const useAppStore = create<AppState>()(
       setCorridorKm: (corridorKm) => set({ corridorKm }),
       setBounds: (bounds) => set({ bounds }),
       setMapView: (mapView) => set({ mapView }),
+      markMapGesture: () => set({ mapGesture: get().mapGesture + 1 }),
       setPanel: (panel) =>
         set({
           panel,

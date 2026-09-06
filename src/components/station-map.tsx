@@ -91,6 +91,7 @@ function MapChrome({
   const setSheet = useAppStore((s) => s.setSheet);
   const setBounds = useAppStore((s) => s.setBounds);
   const setMapView = useAppStore((s) => s.setMapView);
+  const markMapGesture = useAppStore((s) => s.markMapGesture);
   const filters = useAppStore((s) => s.filters);
   const query = useAppStore((s) => s.query);
   const userPos = useAppStore((s) => s.userPos);
@@ -99,9 +100,24 @@ function MapChrome({
   const radiusKm = filters.radiusKm;
   const selected = stations.find((s) => s.id === selectedId);
   const place = findCity(filters.place) ?? findCity(query) ?? null;
+  const userGesture = useRef(false);
 
   useEffect(() => {
+    const container = map.getContainer();
+    const markGesture = () => {
+      userGesture.current = true;
+    };
+    const markTouchZoom = (event: TouchEvent) => {
+      if (event.touches.length > 1) markGesture();
+    };
+    const markKeyboardZoom = (event: KeyboardEvent) => {
+      if (["+", "=", "-", "_", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) markGesture();
+    };
     const publish = () => {
+      if (userGesture.current) {
+        userGesture.current = false;
+        markMapGesture();
+      }
       const b = map.getBounds();
       const c = map.getCenter();
       const zoom = map.getZoom();
@@ -116,12 +132,22 @@ function MapChrome({
         query,
       });
     };
+    map.on("dragstart", markGesture);
     map.on("moveend", publish);
+    container.addEventListener("wheel", markGesture, { passive: true });
+    container.addEventListener("dblclick", markGesture, { passive: true });
+    container.addEventListener("touchstart", markTouchZoom, { passive: true });
+    container.addEventListener("keydown", markKeyboardZoom);
     publish();
     return () => {
+      map.off("dragstart", markGesture);
       map.off("moveend", publish);
+      container.removeEventListener("wheel", markGesture);
+      container.removeEventListener("dblclick", markGesture);
+      container.removeEventListener("touchstart", markTouchZoom);
+      container.removeEventListener("keydown", markKeyboardZoom);
     };
-  }, [map, selectedId, filters, query, setBounds, setMapView]);
+  }, [map, selectedId, filters, query, setBounds, setMapView, markMapGesture]);
 
   useEffect(() => {
     map.invalidateSize();
