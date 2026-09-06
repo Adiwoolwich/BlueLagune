@@ -34,6 +34,7 @@ function detect(): Lang {
   try {
     const nav = (navigator.language || "").toLowerCase();
     if (nav.startsWith("nl")) return "nl";
+    if (nav.startsWith("en")) return "en";
   } catch {
     /* ignore */
   }
@@ -201,6 +202,8 @@ const de = {
   back: "← Zurück",
   emptyView: "Keine Stationen in diesem Kartenausschnitt.",
   emptyHint: "Zoome heraus oder Filter zurücksetzen.",
+  emptyFilter: "Keine Stationen passen zu diesen Filtern.",
+  emptyFilterHint: "Filter zurücksetzen oder andere Optionen wählen.",
   savedEmpty: "Noch keine Stationen gemerkt.",
   recently: "Zuletzt angesehen",
   routeLead: "Stationen entlang der Strecke, nicht nur Luftlinie.",
@@ -475,6 +478,8 @@ const en: Record<keyof typeof de, string> = {
   back: "← Back",
   emptyView: "No stations in this map view.",
   emptyHint: "Zoom out or reset the filters.",
+  emptyFilter: "No stations match these filters.",
+  emptyFilterHint: "Reset the filters or choose different options.",
   savedEmpty: "No stations saved yet.",
   recently: "Recently viewed",
   routeLead: "Stations along the drive, not just as the crow flies.",
@@ -746,6 +751,8 @@ const nl: Record<keyof typeof de, string> = {
   back: "← Terug",
   emptyView: "Geen stations in dit kaartbeeld.",
   emptyHint: "Zoom uit of zet de filters terug.",
+  emptyFilter: "Geen stations passen bij deze filters.",
+  emptyFilterHint: "Wis de filters of kies andere opties.",
   savedEmpty: "Nog geen stations bewaard.",
   recently: "Onlangs bekeken",
   routeLead: "Stations langs de route, niet alleen hemelsbreed.",

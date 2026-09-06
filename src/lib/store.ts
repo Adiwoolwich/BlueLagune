@@ -332,7 +332,6 @@ export function applyFilters(
     if (layer === null) {
       if (!(f.greywater && s.greywater)) return false;
     }
-    if (f.greywater && !s.greywater) return false;
     if (f.freshwater && !s.freshwater) return false;
     if (feeOn) {
       const ok =

@@ -128,6 +128,11 @@ function MapChrome({
     map.invalidateSize();
   }, [sheet, map]);
 
+  const sheetRef = useRef(sheet);
+  useEffect(() => {
+    sheetRef.current = sheet;
+  }, [sheet]);
+
   const didInit = useRef(false);
   useEffect(() => {
     if (didInit.current) return;
@@ -143,14 +148,15 @@ function MapChrome({
     map.flyTo([selected.lat, selected.lng], zoom, { duration: 0.45 });
     const shift = () => {
       if (window.innerWidth >= 768) return;
-      const fraction = sheet === "full" ? 0.28 : sheet === "mid" ? 0.18 : 0.08;
+      const currentSheet = sheetRef.current;
+      const fraction = currentSheet === "full" ? 0.28 : currentSheet === "mid" ? 0.18 : 0.08;
       map.panBy([0, map.getSize().y * fraction], { animate: true, duration: 0.3 });
     };
     map.once("moveend", shift);
     return () => {
       map.off("moveend", shift);
     };
-  }, [selected, map, sheet]);
+  }, [selected, map]);
 
   const fitKey = `${place?.name ?? ""}|${userPos?.lat ?? ""}:${userPos?.lng ?? ""}|${routePath?.from ?? ""}>${routePath?.to ?? ""}:${routePath?.source ?? ""}`;
   const prevFit = useRef("");
@@ -159,7 +165,8 @@ function MapChrome({
     if (!fitKey || fitKey === "||>") return;
     if (fitKey === prevFit.current) return;
     prevFit.current = fitKey;
-    const padBottom = sheet === "full" ? 300 : sheet === "mid" ? 220 : 120;
+    const currentSheet = sheetRef.current;
+    const padBottom = currentSheet === "full" ? 300 : currentSheet === "mid" ? 220 : 120;
     const fit = (bounds: L.LatLngBoundsExpression, maxZoom = 13) => {
       map.fitBounds(bounds, {
         paddingTopLeft: [36, 72],
@@ -186,7 +193,7 @@ function MapChrome({
     if (origin) {
       map.flyTo([origin.lat, origin.lng], 11, { duration: 0.45 });
     }
-  }, [fitKey, selected, map, sheet, radiusKm, place, userPos, routePath]);
+  }, [fitKey, selected, map, radiusKm, place, userPos, routePath]);
 
   useEffect(() => {
     const onClick = (e: L.LeafletMouseEvent) => {
