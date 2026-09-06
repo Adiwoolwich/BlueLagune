@@ -5,6 +5,7 @@ const TILE_HOSTS = [
   "server.arcgisonline.com",
   "services.arcgisonline.com",
   "clarity.maptiles.arcgis.com",
+  "tiles.openfreemap.org",
   "basemaps.cartocdn.com",
 ];
 

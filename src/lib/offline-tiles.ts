@@ -41,6 +41,11 @@ export function roadsUrl(z: number, x: number, y: number) {
   return `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/${z}/${y}/${x}`;
 }
 
+/** The stable wildcard path is also used by SAT_LABEL_STYLE. */
+export function labelsUrl(z: number, x: number, y: number) {
+  return `https://tiles.openfreemap.org/planet/bluelagune/${z}/${x}/${y}.pbf`;
+}
+
 export function boundsFromView(view: MapView): MapBounds {
   const span = 360 / 2 ** Math.max(1, view.zoom);
   return {
@@ -72,6 +77,8 @@ function urlsForBounds(bounds: MapBounds, zMin: number, zMax: number, cap: numbe
     for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) {
       for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
         urls.push(imageryUrl(z, x, y), roadsUrl(z, x, y));
+        // OpenFreeMap serves labels through z14; MapLibre overscales that level above it.
+        if (z <= 14) urls.push(labelsUrl(z, x, y));
         if (urls.length >= cap) return urls;
       }
     }
@@ -122,7 +129,13 @@ function writeMeta(meta: OfflineMeta | null) {
 }
 
 export async function cacheAvailable(): Promise<boolean> {
-  return typeof caches !== "undefined" && typeof caches.open === "function";
+  if (typeof caches === "undefined" || typeof caches.open !== "function") return false;
+  try {
+    const cache = await caches.open(TILE_CACHE);
+    return Boolean(cache);
+  } catch {
+    return false;
+  }
 }
 
 export async function saveTiles(
@@ -155,6 +168,12 @@ export async function saveTiles(
   }
 
   await Promise.all(Array.from({ length: workers }, () => worker()));
+  if (signal?.aborted) {
+    throw new DOMException("Offline map save cancelled", "AbortError");
+  }
+  if (saved === 0 && failed > 0) {
+    throw new Error("No map tiles could be saved");
+  }
   return { saved, failed };
 }
 
@@ -180,6 +199,7 @@ export function rememberSave(meta: OfflineMeta) {
 
 export async function storageLabel(): Promise<string | null> {
   try {
+    if (typeof navigator === "undefined") return null;
     const est = await navigator.storage?.estimate?.();
     if (!est?.usage) return null;
     const mb = est.usage / (1024 * 1024);
