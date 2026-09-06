@@ -28,7 +28,8 @@ export const SAT_LABEL_STYLE: StyleSpecification = {
   sources: {
     openmaptiles: {
       type: "vector",
-      url: "https://tiles.openfreemap.org/planet",
+      // Stable wildcard path: the same z/x/y URLs can be prefetched for offline use.
+      tiles: ["https://tiles.openfreemap.org/planet/bluelagune/{z}/{x}/{y}.pbf"],
       maxzoom: 14,
     },
   },

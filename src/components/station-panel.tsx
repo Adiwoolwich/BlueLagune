@@ -952,7 +952,7 @@ export function ShareFab() {
   );
 }
 
-export function MapRoundButtons() {
+export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
   useLang();
   const mapLabels = useAppStore((s) => s.mapLabels);
   const setMapLabels = useAppStore((s) => s.setMapLabels);
@@ -981,7 +981,7 @@ export function MapRoundButtons() {
         <Share2 className="size-5" />
       </button>
       <LocateButton floating />
-      <OfflineButton floating />
+      <OfflineButton floating openOnMount={offlineOpen} />
       <button
         type="button"
         className={cn(fabCls, "bg-white text-black ring-white/0")}

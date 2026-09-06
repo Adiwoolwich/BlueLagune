@@ -17,6 +17,7 @@ import { fetchReports } from "./lib/reports";
 import { t, useLang } from "./lib/i18n";
 import { cn } from "./lib/utils";
 import { installTapHaptic } from "./lib/tap";
+import { OfflineNotice } from "./components/offline-panel";
 
 const SKIP_KEY = "bl-skip-landing";
 
@@ -46,7 +47,7 @@ function useFilteredStations() {
   );
 }
 
-function Landing({ onDone }: { onDone: () => void }) {
+function Landing({ onDone }: { onDone: (openOffline?: boolean) => void }) {
   const lang = useLang();
   const n = DUMP_STATIONS.length;
   const [visitors, setVisitors] = useState<number | null>(null);
@@ -58,7 +59,7 @@ function Landing({ onDone }: { onDone: () => void }) {
       })
       .catch(() => {});
   }, []);
-  function go(persist: boolean) {
+  function go(persist: boolean, openOffline = false) {
     if (persist) {
       try {
         localStorage.setItem(SKIP_KEY, "1");
@@ -66,7 +67,7 @@ function Landing({ onDone }: { onDone: () => void }) {
         /* ignore */
       }
     }
-    onDone();
+    onDone(openOffline);
   }
   return (
     <div className="bl-landing relative min-h-dvh overflow-hidden text-fg">
@@ -104,6 +105,16 @@ function Landing({ onDone }: { onDone: () => void }) {
         <main className="mt-7 flex flex-1 flex-col sm:mt-12">
           <h1 className="text-[1.55rem] leading-snug font-semibold sm:text-3xl">{t("landingH1")}</h1>
           <p className="mt-3 text-base leading-relaxed text-muted sm:text-lg">{t("landingLead")}</p>
+          <div className="mt-4 rounded-xl bg-white/5 px-3.5 py-3 ring-1 ring-white/10">
+            <p className="text-sm leading-relaxed text-fg">{t("landingOfflineHint")}</p>
+            <button
+              type="button"
+              onClick={() => go(true, true)}
+              className="mt-2 text-sm font-semibold text-primary underline underline-offset-4"
+            >
+              {t("landingOfflineCta")}
+            </button>
+          </div>
           <ul className="mt-6 grid grid-cols-3 gap-2 sm:mt-8 sm:gap-3">
             <li className="bl-tile">
               <span className="bl-float text-primary" aria-hidden>
@@ -324,6 +335,7 @@ function MapApp() {
   useLang();
   useEffect(() => installTapHaptic(), []);
   const initial = useMemo(() => parseUrl(), []);
+  const [openOffline, setOpenOffline] = useState(false);
   const [showLanding, setShowLanding] = useState(() => {
     if (hasMapDeepLink()) return false;
     try {
@@ -394,7 +406,14 @@ function MapApp() {
 
 
   if (showLanding) {
-    return <Landing onDone={() => setShowLanding(false)} />;
+    return (
+      <Landing
+        onDone={(shouldOpenOffline) => {
+          setShowLanding(false);
+          setOpenOffline(Boolean(shouldOpenOffline));
+        }}
+      />
+    );
   }
 
   return (
@@ -421,10 +440,11 @@ function MapApp() {
           <div className="pointer-events-auto mx-auto min-w-0 w-full max-w-[min(58vw,22rem)]">
             <SearchBar overlay />
           </div>
+          <OfflineNotice />
           <span className="size-11 shrink-0" aria-hidden />
         </div>
         <div className="pointer-events-auto absolute right-3 top-[12dvh] z-30">
-          <MapRoundButtons />
+          <MapRoundButtons offlineOpen={openOffline} />
         </div>
       </main>
 

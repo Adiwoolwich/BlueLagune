@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, WifiOff } from "lucide-react";
 import { t, useLang } from "../lib/i18n";
 import { useAppStore } from "../lib/store";
 import {
@@ -18,25 +18,60 @@ import {
 } from "../lib/offline-tiles";
 import { cn } from "../lib/utils";
 
-export function OfflineButton({ floating }: { floating?: boolean }) {
+export function OfflineButton({ floating, openOnMount }: { floating?: boolean; openOnMount?: boolean }) {
   useLang();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(openOnMount));
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
         data-bl-keep-clear
+        title={!online ? t("offlineOffline") : t("offlineTitle")}
         className={cn(
-          "inline-flex items-center justify-center bg-bg-elevated text-fg ring-1 ring-border",
+          "relative inline-flex items-center justify-center bg-bg-elevated text-fg ring-1 ring-border",
           floating ? "size-11 shrink-0 rounded-full shadow-panel" : "h-11 w-11 rounded-xl",
         )}
         aria-label={t("offlineTitle")}
       >
         <Download className="size-5" />
+        {!online ? <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-bad ring-2 ring-black" aria-hidden /> : null}
       </button>
       {open ? <OfflineSheet onClose={() => setOpen(false)} /> : null}
     </>
+  );
+}
+
+export function OfflineNotice() {
+  useLang();
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+  if (online) return null;
+  return (
+    <div role="status" className="pointer-events-auto absolute left-3 right-3 top-[5.25rem] z-30 mx-auto flex max-w-md items-center gap-2 rounded-xl bg-black/90 px-3 py-2 text-xs text-white ring-1 ring-white/20">
+      <WifiOff className="size-4 shrink-0 text-bad" aria-hidden />
+      <span>{t("offlineOffline")}</span>
+    </div>
   );
 }
 
@@ -113,7 +148,11 @@ function OfflineSheet({ onClose }: { onClose: () => void }) {
       setMeta(next);
       setCached(await countCached());
       setUsage(await storageLabel());
-      setMsg(t("offlineSaved", { n: result.saved, mb: estimateMb(result.saved) }));
+      setMsg(
+        result.failed > 0
+          ? t("offlinePartial", { saved: result.saved, failed: result.failed })
+          : t("offlineSaved", { n: result.saved, mb: estimateMb(result.saved) }),
+      );
     } catch {
       setMsg(t("offlineFail"));
     } finally {

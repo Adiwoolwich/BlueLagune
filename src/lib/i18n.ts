@@ -113,6 +113,8 @@ const de = {
   landingH1: "Kassettentoilette entsorgen – ohne Sucherei.",
   landingLead:
     "Finde verlässliche Stationen in Deutschland und den Niederlanden, navigiere dorthin und halte die Karte gemeinsam aktuell.",
+  landingOfflineHint: "Speichere Kartenbereiche vor der Fahrt – Stationen und Navigation bleiben auch ohne Netz erreichbar.",
+  landingOfflineCta: "Offline-Karten öffnen",
   landingTileFind: "Finden & fahren",
   landingTileFindSub: "Karte, Suche, GPX",
   landingTileWater: "Wasser & Kassette",
@@ -389,6 +391,8 @@ const en: Record<keyof typeof de, string> = {
   landingH1: "Empty the cassette toilet — no hunting around.",
   landingLead:
     "Find reliable dump stations in Germany and the Netherlands, navigate there, and keep the map up to date together.",
+  landingOfflineHint: "Save map areas before you set off — stations and navigation stay available without a network.",
+  landingOfflineCta: "Open offline maps",
   landingTileFind: "Find & drive",
   landingTileFindSub: "Map, search, GPX",
   landingTileWater: "Water & cassette",
@@ -663,6 +667,8 @@ const nl: Record<keyof typeof de, string> = {
   landingKicker: "Losstations voor de camper",
   landingH1: "Cassette legen – zonder zoekwerk.",
   landingLead: "Vind betrouwbare stations in Duitsland en Nederland, navigeer ernaartoe en houd de kaart samen actueel.",
+  landingOfflineHint: "Sla kaartgebieden op voordat je vertrekt — stations en navigatie blijven zonder netwerk beschikbaar.",
+  landingOfflineCta: "Offlinekaarten openen",
   landingTileFind: "Vinden & rijden",
   landingTileFindSub: "Kaart, zoeken, GPX",
   landingTileWater: "Water & cassette",
