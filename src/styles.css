@@ -420,3 +420,5 @@
   border-right: 5px solid transparent;
   border-bottom: 10px solid #e11d2e;
 }
+
+.bl-list-row { content-visibility: auto; contain-intrinsic-size: 72px; }

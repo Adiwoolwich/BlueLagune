@@ -407,7 +407,7 @@ function StationList({ stations }: { stations: Station[] }) {
           const fav = favorites.includes(s.id);
           const pin = STATUS_COLOR[deriveStatus(s, serverToLocal(s.id, serverReports[s.id], reports[s.id]))] ?? "#e11d2e";
           return (
-            <li key={s.id}>
+            <li key={s.id} className="bl-list-row">
               <button
                 type="button"
                 onClick={() => select(s.id)}

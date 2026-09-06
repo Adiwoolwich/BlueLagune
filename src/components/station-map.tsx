@@ -10,9 +10,8 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import Supercluster from "supercluster";
-import maplibreGL from "@maplibre/maplibre-gl-leaflet";
 import "leaflet/dist/leaflet.css";
-import "maplibre-gl/dist/maplibre-gl.css";
+
 import { SAT_LABEL_STYLE } from "@/lib/map-label-style";
 import {
   deriveStatus,
@@ -241,10 +240,18 @@ function ClusterLayer({ stations }: { stations: Station[] }) {
   }, [pinned]);
 
   useEffect(() => {
-    const bump = () => setTick((n) => n + 1);
+    let frame: number | null = null;
+    const bump = () => {
+      if (frame != null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        setTick((n) => n + 1);
+      });
+    };
     map.on("moveend zoomend", bump);
     return () => {
       map.off("moveend zoomend", bump);
+      if (frame != null) cancelAnimationFrame(frame);
     };
   }, [map]);
 
@@ -344,20 +351,27 @@ function VectorLabels() {
       pane.style.zIndex = "350";
       pane.style.pointerEvents = "none";
     }
-    const layer = maplibreGL({
-      style: SAT_LABEL_STYLE,
-      interactive: false,
-      attributionControl: false,
-      pane: "bl-labels",
-      // MapLibre 6 default (4) splits tiles above source maxzoom 14 and
-      // fetches empty z15 OpenFreeMap 200s. 8 keeps covering at z14 overscale.
-      zoomLevelsToOverscale: 8,
-    });
-    layer.addTo(map);
-    const canvas = layer.getContainer();
-    if (canvas) canvas.style.pointerEvents = "none";
+    let disposed = false;
+    let layer: L.Layer | null = null;
+    void Promise.all([import("@maplibre/maplibre-gl-leaflet"), import("maplibre-gl/dist/maplibre-gl.css")]).then(([{ default: maplibreGL }]) => {
+      if (disposed) return;
+      const nextLayer = maplibreGL({
+        style: SAT_LABEL_STYLE,
+        interactive: false,
+        attributionControl: false,
+        pane: "bl-labels",
+        // MapLibre 6 default (4) splits tiles above source maxzoom 14 and
+        // fetches empty z15 OpenFreeMap 200s. 8 keeps covering at z14 overscale.
+        zoomLevelsToOverscale: 8,
+      });
+      layer = nextLayer;
+      nextLayer.addTo(map);
+      const canvas = nextLayer.getContainer();
+      if (canvas) canvas.style.pointerEvents = "none";
+    }).catch(() => {});
     return () => {
-      map.removeLayer(layer);
+      disposed = true;
+      if (layer) map.removeLayer(layer);
     };
   }, [map, mapLabels]);
   return null;
