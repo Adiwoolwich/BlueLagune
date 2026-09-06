@@ -960,28 +960,23 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
   const setSatClarity = useAppStore((s) => s.setSatClarity);
   const sheet = useAppStore((s) => s.sheet);
   const setSheet = useAppStore((s) => s.setSheet);
-  const mapView = useAppStore((s) => s.mapView);
-  const filters = useAppStore((s) => s.filters);
-  const query = useAppStore((s) => s.query);
-  const selectedId = useAppStore((s) => s.selectedId);
   const hold = useRef(0);
   const held = useRef(false);
+  const clarityToastTimer = useRef<number | null>(null);
+  const [clarityToast, setClarityToast] = useState(false);
+
+  useEffect(() => () => {
+    if (clarityToastTimer.current != null) window.clearTimeout(clarityToastTimer.current);
+  }, []);
+
+  function showClarityToast() {
+    if (clarityToastTimer.current != null) window.clearTimeout(clarityToastTimer.current);
+    setClarityToast(true);
+    clarityToastTimer.current = window.setTimeout(() => setClarityToast(false), 1400);
+  }
   return (
-    <div className="flex flex-col gap-3">
-      <button
-        type="button"
-        className={fabCls}
-        aria-label={t("shareMap")}
-        onClick={() => {
-          const url = shareUrl({ ...mapView, id: selectedId, filters, query });
-          if (navigator.share) void navigator.share({ url, title: "Blue Lagune" }).catch(() => copyShareUrl());
-          else void copyShareUrl();
-        }}
-      >
-        <Share2 className="size-5" />
-      </button>
+    <div className="relative flex flex-col gap-3">
       <LocateButton floating />
-      <OfflineButton floating openOnMount={offlineOpen} />
       <button
         type="button"
         className={cn(fabCls, "bg-white text-black ring-white/0")}
@@ -994,6 +989,7 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
           hold.current = window.setTimeout(() => {
             held.current = true;
             setSatClarity(!satClarity);
+            showClarityToast();
           }, 480);
         }}
         onPointerUp={() => window.clearTimeout(hold.current)}
@@ -1018,6 +1014,15 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
       >
         <List className="size-5" />
       </button>
+      <OfflineButton floating openOnMount={offlineOpen} />
+      {clarityToast ? (
+        <span
+          role="status"
+          className="pointer-events-none absolute top-14 right-14 whitespace-nowrap rounded-lg bg-black/90 px-2.5 py-1.5 text-xs text-white shadow-lg"
+        >
+          {t("mapClarity")}
+        </span>
+      ) : null}
     </div>
   );
 }

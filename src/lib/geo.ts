@@ -77,6 +77,11 @@ export function isFiniteLatLng(lat: unknown, lng: unknown): lat is number {
   );
 }
 
+/** Navigation coordinates must point into the DE/NL product area. */
+export function isSensibleNavCoords(lat: unknown, lng: unknown): lat is number {
+  return isFiniteLatLng(lat, lng) && lat >= 47.2 && lat <= 55.1 && lng >= 3.3 && lng <= 15.1;
+}
+
 /** Distance along a polyline to the nearest projected point (km from start). */
 export function alongRouteKm(p: LatLng, line: LatLng[]): number {
   if (line.length === 0) return Number.POSITIVE_INFINITY;

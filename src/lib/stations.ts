@@ -1,5 +1,5 @@
 import { CITIES, findCity, type City } from "./cities";
-import { isFiniteLatLng } from "./geo";
+import { isFiniteLatLng, isSensibleNavCoords } from "./geo";
 import partA from "../data/stations-a.json";
 import partB from "../data/stations-b.json";
 import partC from "../data/stations-c.json";
@@ -334,7 +334,7 @@ export function canNavigateTo(s: {
   address?: string;
   city?: string;
 }): boolean {
-  return hasPreciseCoords(s) || hasStreetAddress(s);
+  return isSensibleNavCoords(s.lat, s.lng);
 }
 
 export function fullAddress(s: {
