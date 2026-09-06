@@ -337,7 +337,29 @@ function MapApp() {
   const panel = useAppStore((s) => s.panel);
   const sheet = useAppStore((s) => s.sheet);
   const setSheet = useAppStore((s) => s.setSheet);
-  const [liveH, setLiveH] = useState<number | null>(null);
+  const sheetRef = useRef<HTMLElement>(null);
+  const liveHRef = useRef<number | null>(null);
+  const liveRaf = useRef<number | null>(null);
+  const applyLiveSheet = (h: number | null) => {
+    const el = sheetRef.current;
+    if (!el) return;
+    liveHRef.current = h;
+    if (liveRaf.current != null) {
+      cancelAnimationFrame(liveRaf.current);
+      liveRaf.current = null;
+    }
+    el.style.transition = "none";
+    if (h == null) {
+      el.style.setProperty("--sheet-offset", (sheetSnaps().full - sheetH(sheet)) + "dvh");
+      el.style.removeProperty("transition");
+      return;
+    }
+    liveRaf.current = requestAnimationFrame(() => {
+      liveRaf.current = null;
+      const live = liveHRef.current;
+      if (live != null) el.style.setProperty("--sheet-offset", (sheetSnaps().full - live) + "dvh");
+    });
+  };
   const [guide, setGuide] = useState(false);
   const routePath = useAppStore((s) => s.routePath);
   const bounds = useAppStore((s) => s.bounds);
@@ -407,23 +429,20 @@ function MapApp() {
       </main>
 
       <aside
-        className={cn(
-          "absolute inset-x-0 bottom-0 z-20 flex min-h-0 flex-col bg-black",
-          "rounded-t-[1.25rem]",
-          liveH == null && "transition-[height] duration-150 ease-out",
-          liveH == null && sheet === "peek" && "h-[24dvh]",
-          liveH == null && sheet === "mid" && "h-[42dvh] md:h-[36.5dvh]",
-          liveH == null && sheet === "full" && "h-[90dvh]",
-        )}
-        style={liveH != null ? { height: `${liveH}dvh`, transition: "none" } : undefined}
+        ref={sheetRef}
+        className="absolute inset-x-0 bottom-0 z-20 flex h-[90dvh] min-h-0 flex-col rounded-t-[1.25rem] bg-black transition-transform duration-150 ease-out"
+        style={{
+          transform: "translate3d(0, var(--sheet-offset), 0)",
+          "--sheet-offset": (sheetSnaps().full - sheetH(sheet)) + "dvh",
+        } as React.CSSProperties}
       >
         <SheetHandle
           label={t("sheetResize")}
           sheet={sheet}
-          liveH={liveH}
-          onLiveH={setLiveH}
+          liveH={liveHRef.current}
+          onLiveH={applyLiveSheet}
           onSnap={(s) => {
-            setLiveH(null);
+            applyLiveSheet(null);
             setSheet(s);
           }}
           onTap={cycleSheet}
