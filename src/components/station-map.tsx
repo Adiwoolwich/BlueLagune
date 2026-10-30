@@ -660,7 +660,7 @@ export function StationMap({
           tileSize={satSrc.tileSize ?? 256}
           zoomOffset={satSrc.zoomOffset ?? 0}
           detectRetina={!satSrc.tileSize}
-          className="bl-sat"
+          className="bl-sat-layer" // nicht „bl-sat“: kollidiert mit .bl-sat (Vorschau-Box, shell.css) → Hintergrund verdeckt Kacheln
         />
       ) : (
         <VectorBase dark={dark} onFail={onGlFail} />
