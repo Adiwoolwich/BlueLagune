@@ -24,6 +24,11 @@ export class VisitorCounter {
     this.state = state;
   }
 
+  /** Tageswechsel (UTC): Hashes und Salt verfallen automatisch (Alarm wird in VisitorStore.salt() gesetzt). */
+  async alarm(): Promise<void> {
+    await new VisitorStore(this.state.storage as unknown as KV).purge();
+  }
+
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const store = new VisitorStore(this.state.storage as unknown as KV);

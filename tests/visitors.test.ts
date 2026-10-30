@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { VisitorStore, isoWeek, handleAdmin, type KV } from "../worker/visitors";
+import { VisitorStore, isoWeek, handleAdmin, nextUtcMidnight, type KV } from "../worker/visitors";
 
 function mem(): KV & { data: Map<string, unknown> } {
   const data = new Map<string, unknown>();
@@ -136,5 +136,28 @@ describe("Altbestand", () => {
     expect([...kv.data.keys()].some((k) => k.startsWith("h:"))).toBe(false);
     expect(JSON.stringify([...kv.data.values()])).not.toContain("f".repeat(64));
     expect(await kv.get("count")).toBe(8);
+  });
+});
+
+describe("Verfall der Tageshashes bis Mitternacht (Alarm statt expirationTtl)", () => {
+  it("salt() setzt den Alarm auf die nächste UTC-Mitternacht", async () => {
+    const kv = mem();
+    const alarms: number[] = [];
+    kv.setAlarm = async (t: number) => void alarms.push(t);
+    const s = new VisitorStore(kv, at("2026-10-30T22:15:00Z"));
+    await s.visit("1.2.3.4");
+    expect(alarms).toEqual([Date.UTC(2026, 9, 31)]);
+    expect(nextUtcMidnight(Date.UTC(2026, 11, 31, 23, 59))).toBe(Date.UTC(2027, 0, 1));
+  });
+  it("purge() (Alarm) löscht seen:/fb:/st:rl: und Salt ohne Folgeaufruf, Aggregate bleiben", async () => {
+    const kv = mem();
+    const s = new VisitorStore(kv, at("2026-10-30T10:00:00Z"));
+    await s.visit("1.2.3.4");
+    await kv.put("fb:" + "a".repeat(64), { n: 1, t: 0 });
+    await kv.put("st:rl:" + "b".repeat(64), { n: 1, t: 0 });
+    await kv.put("st:station-1", { status: "ok", at: 0 });
+    await s.purge();
+    const keys = [...kv.data.keys()].sort();
+    expect(keys).toEqual(["count", "d:2026-10-30", "st:station-1"]);
   });
 });

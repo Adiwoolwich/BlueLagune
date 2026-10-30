@@ -240,7 +240,8 @@
   background: var(--bl-surface-glass); border: 1px solid var(--bl-border); box-shadow: var(--bl-shadow-2); }
 .bl-sat-ask-q { font-weight: 700; font-size: 15px; }
 .bl-sat-ask-why { font-size: 12.5px; color: var(--bl-text-muted); }
-.bl-sat-ask-row { display: flex; gap: 8px; justify-content: flex-end; }
-.bl-sat-ask-btn { min-height: 44px; min-width: 72px; padding: 0 16px; border-radius: 999px; font-weight: 600; color: var(--bl-text); border: 1px solid var(--bl-border); background: transparent; }
-.bl-sat-ask-yes { background: var(--bl-accent); color: var(--bl-accent-contrast); border-color: transparent; box-shadow: 0 0 14px var(--bl-glow); }
+.bl-sat-ask-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bl-sat-ask-btn { background: var(--bl-chip-bg) !important; min-height: 44px; min-width: 72px; padding: 0 16px; border-radius: 999px; font-weight: 600; color: var(--bl-text); border: 1px solid var(--bl-border); background: transparent; }
 .bl-sat-ask-btn:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }
+.bl-sat-hit { position: absolute; inset: 0; z-index: 1; cursor: pointer; }
+.bl-sat-hit:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: -2px; }

@@ -1,19 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { SAT_PREVIEW, SAT_PREVIEW_ATTRIBUTION, SAT_PREVIEW_MOCK, SAT_PREVIEW_POWERED, previewGrid, setSatChoice, useSatChoice } from "../lib/sat-preview";
+import { SAT_ASK, SAT_PREVIEW, SAT_PREVIEW_ATTRIBUTION, SAT_PREVIEW_MOCK, SAT_PREVIEW_POWERED, allowSat, askSat, l2, notNowSat, previewGrid, satAskVisible, useSatConsent } from "../lib/sat-preview";
 import { useLang } from "../lib/i18n";
 import { cn } from "../lib/utils";
 
-export const SAT_TXT = {
-  ask: { de: "Satellitenvorschau anzeigen?", en: "Show satellite previews?", nl: "Satellietvoorbeelden tonen?" },
-  why: {
-    de: "Die Bilder lädt dein Browser direkt von Esri (USA); dabei wird deine IP-Adresse übertragen.",
-    en: "Your browser loads the images directly from Esri (USA); your IP address is transmitted.",
-    nl: "Je browser laadt de beelden rechtstreeks van Esri (VS); daarbij wordt je IP-adres doorgegeven.",
-  },
-  yes: { de: "Ja", en: "Yes", nl: "Ja" },
-  no: { de: "Nein", en: "No", nl: "Nee" },
-  mock: { de: "Mock", en: "Mock", nl: "Mock" },
-} as const;
+
 
 /** Sichtbarkeit (IntersectionObserver); ohne IO-Unterstützung gilt sichtbar. */
 function useVisible<T extends Element>(): [React.RefObject<T | null>, boolean] {
@@ -43,12 +33,12 @@ function VectorMini({ seed }: { seed: number }) {
 
 export function SatPreview({ lat, lng, className, height = 112 }: { lat: number; lng: number; className?: string; height?: number }) {
   const lang = useLang();
-  const choice = useSatChoice();
+  const consent = useSatConsent();
   const [ref, visible] = useVisible<HTMLDivElement>();
   const [failed, setFailed] = useState(false);
   if (!SAT_PREVIEW) return null;
   const grid = previewGrid(lat, lng);
-  const live = choice === "yes" && visible && !failed && grid.tiles.every((t) => t.url);
+  const live = consent.allowed && visible && !failed && grid.tiles.every((t) => t.url);
   const seed = Math.abs(Math.round(lat * 1000 + lng * 1000));
   return (
     <div ref={ref} className={cn("bl-sat", className)} style={{ height }} data-bl-sat={live ? (SAT_PREVIEW_MOCK ? "mock" : "live") : "vector"}>
@@ -61,10 +51,23 @@ export function SatPreview({ lat, lng, className, height = 112 }: { lat: number;
       ) : (
         <VectorMini seed={seed} />
       )}
+      {!consent.allowed ? (
+        <span
+          role="button"
+          tabIndex={0}
+          className="bl-sat-hit"
+          aria-label={l2(SAT_ASK.q, lang)}
+          data-bl-sat-placeholder
+          onClick={(e) => (e.stopPropagation(), askSat())}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") (e.preventDefault(), e.stopPropagation(), askSat());
+          }}
+        />
+      ) : null}
       <span className="bl-sat-pin" aria-hidden />
       {live ? (
         <span className="bl-sat-attr">
-          {SAT_PREVIEW_MOCK ? <b className="bl-sat-mock">{SAT_TXT.mock[lang]} · </b> : null}
+          {SAT_PREVIEW_MOCK ? <b className="bl-sat-mock">Mock · </b> : null}
           {SAT_PREVIEW_POWERED} | {SAT_PREVIEW_ATTRIBUTION}
         </span>
       ) : null}
@@ -72,18 +75,18 @@ export function SatPreview({ lat, lng, className, height = 112 }: { lat: number;
   );
 }
 
-/** Einmalige Abfrage; erscheint nur, solange noch keine Wahl getroffen wurde. */
-export function SatConsentPrompt({ className }: { className?: string }) {
+/** Abfrage mit zwei gleichwertigen Knöpfen, nichts vorausgewählt (Wortlaut: Lex, 30.10.2026). */
+export function SatConsentPrompt({ className, onlyWhenAsked }: { className?: string; onlyWhenAsked?: boolean }) {
   const lang = useLang();
-  const choice = useSatChoice();
-  if (!SAT_PREVIEW || choice) return null;
+  const st = useSatConsent();
+  if (!satAskVisible() || (onlyWhenAsked && !st.open) || (!SAT_PREVIEW && !st.open)) return null;
   return (
-    <div role="dialog" aria-label={SAT_TXT.ask[lang]} className={cn("bl-sat-ask", className)} data-bl-sat-ask>
-      <p className="bl-sat-ask-q">{SAT_TXT.ask[lang]}</p>
-      <p className="bl-sat-ask-why">{SAT_TXT.why[lang]}</p>
+    <div role="dialog" aria-label={l2(SAT_ASK.q, lang)} className={cn("bl-sat-ask", className)} data-bl-sat-ask>
+      <p className="bl-sat-ask-q">{l2(SAT_ASK.q, lang)}</p>
+      <p className="bl-sat-ask-why">{l2(SAT_ASK.body, lang)}</p>
       <div className="bl-sat-ask-row">
-        <button type="button" className="bl-sat-ask-btn" onClick={() => setSatChoice("no")}>{SAT_TXT.no[lang]}</button>
-        <button type="button" className="bl-sat-ask-btn bl-sat-ask-yes" onClick={() => setSatChoice("yes")}>{SAT_TXT.yes[lang]}</button>
+        <button type="button" className="bl-sat-ask-btn" onClick={allowSat} data-bl-sat-allow>{l2(SAT_ASK.allow, lang)}</button>
+        <button type="button" className="bl-sat-ask-btn" onClick={notNowSat} data-bl-sat-later>{l2(SAT_ASK.notNow, lang)}</button>
       </div>
     </div>
   );

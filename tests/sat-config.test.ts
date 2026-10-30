@@ -52,10 +52,14 @@ describe("Satellit: eine Konfigurationsstelle, Esri mit Key, EOX als Rückfall",
   it("station-map enthält keine fest verdrahtete Satelliten-URL", () => {
     expect(readFileSync("src/components/station-map.tsx", "utf8")).not.toMatch(/tiles\.maps\.eox\.at|arcgis/);
   });
-  it("Datenschutz-Baustein Satellit: Lex' Du-Fassung, ohne DPF-Satz, mit SCC – DE/EN/NL", () => {
-    expect(de.privacySatP).toContain("Wenn du die Satellitenansicht einschaltest, lädt dein Browser Kartenkacheln direkt von Servern der Environmental Systems Research Institute, Inc. (Esri), 380 New York Street, Redlands, CA 92373, USA.");
+  it("Datenschutz-Baustein Satellit: Lex' Einwilligungs-Fassung (30.10.2026) DE/EN, ohne DPF-Satz, mit SCC", () => {
+    expect(de.privacySatP).toContain("Nur wenn du einwilligst („Erlauben“) oder die Satellitenansicht einschaltest, lädt dein Browser Kartenkacheln direkt von Servern der Environmental Systems Research Institute, Inc. (Esri), 380 New York Street, Redlands, CA 92373, USA.");
+    expect(de.privacySatP).toContain("Rechtsgrundlage: deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG).");
+    expect(de.privacySatP).toContain("„Datenschutz“ → „Satellitenvorschau“");
+    expect(en.privacySatP).toContain("Legal basis: your consent (Art. 6(1)(a) GDPR, § 25(1) TDDDG).");
     expect(de.privacySatP).toContain("Esri Data Processing Addendum");
-    expect(de.privacySatP).toContain("Am einfachsten lässt du die Satellitenansicht ausgeschaltet.");
+    expect(de.privacyLawP).toContain("und Satellitenvorschau");
+    expect(de.privacyLsP).toContain("Einwilligungswahl Satellitenvorschau");
     expect(de.privacySatP).not.toMatch(/\b(Sie|Ihr|Ihre|Ihren|Ihrem)\b/);
     expect(nl.privacySatP).not.toMatch(/\b(u|uw)\b/);
     for (const l of [de, en, nl]) {

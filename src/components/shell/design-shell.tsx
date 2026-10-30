@@ -12,6 +12,8 @@ import { copyShareUrl, shareUrl } from "../../lib/url-state";
 import { postReport } from "../../lib/reports";
 import { feeLabel, t, typeLabel, useLang } from "../../lib/i18n";
 import { cn } from "../../lib/utils";
+import { withSatConsent } from "../../lib/sat-preview";
+import { SatConsentPrompt } from "../sat-preview";
 
 /*
  * Gerüst für ?design=* (Supercharger-Stil): Such-Pill, Chip-Leiste, Standort-FAB,
@@ -117,10 +119,12 @@ function LayersMenu({ onClose, onList, offlineOpen }: { onClose: () => void; onL
           aria-pressed={mapStyle === "sat"}
           onClick={() => {
             if (mapStyle === "sat") setMapStyle("map");
-            else {
-              setMapStyle("sat");
-              if (!mapLabels) setMapLabels(true);
-            }
+            else
+              // Gate vor der Satellitenansicht: dieselbe Einwilligung wie die Vorschau (sat-source.ts unverändert).
+              withSatConsent(() => {
+                setMapStyle("sat");
+                if (!mapLabels) setMapLabels(true);
+              });
           }}
         >
           <Satellite className="size-5" /> <span>{tx("sat", lang)}</span>
@@ -129,6 +133,7 @@ function LayersMenu({ onClose, onList, offlineOpen }: { onClose: () => void; onL
           <List className="size-5" /> <span>{tx("list", lang)}</span>
         </button>
         <OfflineButton label={tx("offline", lang)} className="bl-g-menu-row" openOnMount={offlineOpen} />
+        <SatConsentPrompt onlyWhenAsked />
       </div>
     </div>
   );

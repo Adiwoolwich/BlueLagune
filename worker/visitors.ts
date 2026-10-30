@@ -2,6 +2,8 @@
  * Besuchszählung nur serverseitig (ohne Cookies, ohne localStorage, ohne Client-Skript, ohne Verweildauer).
  * - Eindeutige Besucher pro Tag über SHA-256(Tages-Salt + IP). Der Salt ist zufällig, gilt einen UTC-Tag
  *   und wird beim Tageswechsel ersetzt; dabei werden alle Hash-Marker (seen:, fb:, st:rl:) gelöscht.
+ *   Verfall automatisch: beim Anlegen des Salts wird ein Alarm auf die nächste UTC-Mitternacht gesetzt
+ *   (Durable Objects kennen kein KV-expirationTtl); alarm() → purge(). Das Löschen beim ersten Aufruf bleibt als Rückfall.
  *   Es bleibt also kein dauerhafter IP-Hash. IP und User-Agent werden nie gespeichert.
  * - Gespeichert bleiben nur Aggregate: d:<Tag> = { visits, uniques } und count (Summe eindeutiger Tagesbesucher).
  */
@@ -10,6 +12,8 @@ export type KV = {
   put(k: string, v: unknown): Promise<void>;
   delete(k: string | string[]): Promise<unknown>;
   list<T>(o: { prefix: string }): Promise<Map<string, T>>;
+  /** Durable-Object-Storage hat kein expirationTtl; stattdessen Alarm bis Mitternacht (UTC). */
+  setAlarm?(scheduledTime: number): Promise<void>;
 };
 type Day = { visits: number; uniques: number };
 export type Week = { week: string; visits: number; uniques: number };
@@ -30,6 +34,12 @@ export function isoWeek(day: string): string {
   return `${year}-W${String(week).padStart(2, "0")}`;
 }
 
+/** Nächste UTC-Mitternacht (ms) – Verfallszeit der Tageshashes. */
+export function nextUtcMidnight(ms: number): number {
+  const d = new Date(ms);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
+}
+
 export async function sha256Hex(value: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -43,14 +53,25 @@ export class VisitorStore {
     const day = utcDay(this.now());
     const cur = await this.kv.get<{ day: string; value: string }>("salt");
     if (cur && cur.day === day) return cur.value;
+    await this.purgeHashes();
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const value = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+    await this.kv.put("salt", { day, value });
+    await this.kv.setAlarm?.(nextUtcMidnight(this.now()));
+    return value;
+  }
+
+  private async purgeHashes(): Promise<void> {
     for (const p of HASH_PREFIXES) {
       const keys = [...(await this.kv.list({ prefix: p })).keys()];
       for (let i = 0; i < keys.length; i += 128) await this.kv.delete(keys.slice(i, i + 128));
     }
-    const bytes = crypto.getRandomValues(new Uint8Array(32));
-    const value = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-    await this.kv.put("salt", { day, value });
-    return value;
+  }
+
+  /** Alarm um Mitternacht (UTC): alle Tageshashes und den Salt verwerfen; Aggregate bleiben. */
+  async purge(): Promise<void> {
+    await this.purgeHashes();
+    await this.kv.delete("salt");
   }
 
   /** Tageshash der IP (nur für Zählung/Rate-Limit am selben Tag). */

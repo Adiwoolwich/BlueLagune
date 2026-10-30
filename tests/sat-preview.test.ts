@@ -24,3 +24,60 @@ describe("Sat-Vorschau", () => {
     expect(SAT_PREVIEW_ATTRIBUTION).toBe("Esri, Maxar, Earthstar Geographics");
   });
 });
+
+import { allowSat, askSat, loadSatConsent, notNowSat, revokeSat, satAllowed, satAskVisible, SAT_ASK, SAT_CONSENT_KEY, SAT_LATER_KEY } from "../src/lib/sat-preview";
+function fakeStorage() {
+  const m = new Map<string, string>();
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k), clear: () => m.clear(), m };
+}
+describe("Einwilligung Sat-Vorschau", () => {
+  const local = fakeStorage();
+  const session = fakeStorage();
+  (globalThis as Record<string, unknown>).localStorage = local;
+  (globalThis as Record<string, unknown>).sessionStorage = session;
+  const reset = () => (local.clear(), session.clear(), loadSatConsent());
+
+  it("vor dem Ja: nichts erlaubt, Abfrage sichtbar", () => {
+    reset();
+    expect(satAllowed()).toBe(false);
+    expect(satAskVisible()).toBe(true);
+  });
+  it("Nicht jetzt: bleibt Miniatur, Sperre nur in sessionStorage, Platzhalter-Klick fragt erneut", () => {
+    reset();
+    notNowSat();
+    expect(satAllowed()).toBe(false);
+    expect(satAskVisible()).toBe(false);
+    expect(session.m.get(SAT_LATER_KEY)).toBe("1");
+    expect(local.m.has(SAT_CONSENT_KEY)).toBe(false);
+    session.clear();
+    loadSatConsent(); // nächste Sitzung
+    expect(satAskVisible()).toBe(true);
+    notNowSat();
+    askSat();
+    expect(satAskVisible()).toBe(true);
+  });
+  it("Erlauben → localStorage; Gate führt die wartende Aktion (Satellit-Ebene) aus", () => {
+    reset();
+    let ran = 0;
+    askSat(() => ran++);
+    expect(ran).toBe(0);
+    allowSat();
+    expect(ran).toBe(1);
+    expect(local.m.get(SAT_CONSENT_KEY)).toBe("yes");
+    loadSatConsent();
+    expect(satAllowed()).toBe(true);
+  });
+  it("Widerruf: danach nicht mehr erlaubt, Wahl aus localStorage entfernt", () => {
+    reset();
+    allowSat();
+    revokeSat();
+    expect(satAllowed()).toBe(false);
+    expect(local.m.has(SAT_CONSENT_KEY)).toBe(false);
+  });
+  it("Texte nur DE/EN, gleichwertige Knöpfe [Erlauben]/[Nicht jetzt]", () => {
+    expect(Object.keys(SAT_ASK.q)).toEqual(["de", "en"]);
+    expect(SAT_ASK.allow.de).toBe("Erlauben");
+    expect(SAT_ASK.notNow.de).toBe("Nicht jetzt");
+    expect(SAT_ASK.body.de).toContain("„Datenschutz“ → „Satellitenvorschau“");
+  });
+});
