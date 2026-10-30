@@ -18,27 +18,41 @@ export type Lang = "de" | "en" | "nl";
 
 const KEY = "bl-lang";
 
-function readSaved(): Lang | null {
-  try {
-    const v = localStorage.getItem(KEY);
-    if (v === "en" || v === "de" || v === "nl") return v;
-  } catch {
-    /* ignore */
-  }
-  return null;
+/** Aktive Sprachen: nur DE/EN (User 30.10. 12:42). NL-Texte bleiben im Code, werden aber nicht mehr gewählt. */
+export const ACTIVE_LANGS = ["de", "en"] as const;
+
+/** nl (gespeichert oder Browsersprache) → en; sonst en/de; Standard de. */
+export function pickLang(saved: string | null | undefined, nav: string | null | undefined): "de" | "en" {
+  const s = (saved ?? "").toLowerCase();
+  if (s === "de" || s === "en") return s;
+  if (s === "nl") return "en";
+  const n = (nav ?? "").toLowerCase();
+  if (n.startsWith("en") || n.startsWith("nl")) return "en";
+  return "de";
 }
 
 function detect(): Lang {
-  const saved = readSaved();
-  if (saved) return saved;
+  let saved: string | null = null;
+  let nav = "";
   try {
-    const nav = (navigator.language || "").toLowerCase();
-    if (nav.startsWith("nl")) return "nl";
-    if (nav.startsWith("en")) return "en";
+    saved = localStorage.getItem(KEY);
   } catch {
     /* ignore */
   }
-  return "de";
+  try {
+    nav = navigator.language || "";
+  } catch {
+    /* ignore */
+  }
+  const lang = pickLang(saved, nav);
+  if (saved === "nl") {
+    try {
+      localStorage.setItem(KEY, lang);
+    } catch {
+      /* ignore */
+    }
+  }
+  return lang;
 }
 
 let current: Lang = "de";
@@ -75,6 +89,7 @@ export function getLang(): Lang {
 
 export function setLang(next: Lang) {
   if (next !== "de" && next !== "en" && next !== "nl") return;
+  if (next === "nl") next = "en"; // NL nicht mehr wählbar
   current = next;
   try {
     localStorage.setItem(KEY, next);
@@ -86,7 +101,7 @@ export function setLang(next: Lang) {
 }
 
 export function toggleLang() {
-  setLang(current === "de" ? "en" : current === "en" ? "nl" : "de");
+  setLang(current === "de" ? "en" : "de");
 }
 
 export function useLang(): Lang {

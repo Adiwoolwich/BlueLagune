@@ -372,3 +372,8 @@
 /* ===== Konzept 1 P3: Klarheit sichtbar als Platzhalter (sat-source.ts unverändert) ===== */
 :root[data-k="1"] .k1-badge-ph { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; border: 1px dashed var(--bl-accent-warm); color: var(--bl-accent-warm); }
 :root[data-k="1"] .k1-layer-tiles + .k1-ph-note, :root[data-k="1"] .k1-ph-note { max-width: 252px; padding: 6px 8px; border-radius: 10px; border: 1px dashed var(--bl-accent-warm); }
+/* P4: X je Verlaufseintrag (Tippziel ≥ 44 px) */
+:root[data-k="1"] .k1-chip-wrap { display: inline-flex; align-items: center; border-radius: 999px; background: var(--bl-chip-bg); border: 1px solid var(--bl-border); }
+:root[data-k="1"] .k1-chip-wrap .k1-chip { border: 0; background: transparent; padding-right: 4px; }
+:root[data-k="1"] .k1-chip-x { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 999px; color: var(--bl-text-muted); }
+:root[data-k="1"] .k1-chip-x:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: -2px; }

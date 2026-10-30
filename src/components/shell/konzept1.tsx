@@ -32,6 +32,7 @@ const K: Record<string, L3> = {
   filter: { de: "Filter", en: "Filters" },
   recent: { de: "Zuletzt gesucht", en: "Recent searches" },
   clearRecent: { de: "Verlauf löschen", en: "Clear history" },
+  removeRecent: { de: "„{q}“ aus dem Verlauf löschen", en: "Remove “{q}” from history" },
   nearTiles: { de: "In der Nähe", en: "Nearby" },
   near: { de: "In meiner Nähe", en: "Near me" },
   nearest: { de: "Route zur nächsten Station", en: "Route to nearest station" },
@@ -118,11 +119,16 @@ function useRecent() {
     try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* privat/voll */ }
     setRecent(next);
   }
+  function remove(q: string) {
+    const next = readRecent().filter((x) => x !== q);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* egal */ }
+    setRecent(next);
+  }
   function clear() {
     try { localStorage.removeItem(RECENT_KEY); } catch { /* egal */ }
     setRecent([]);
   }
-  return { recent, remember, clear };
+  return { recent, remember, remove, clear };
 }
 
 /* ---------- Oben: große Suche ---------- */
@@ -219,9 +225,14 @@ function SearchSheet({ stations, inView, recent, onClose: done }: { stations: St
             </p>
             <div className="k1-recent">
               {recent.recent.map((r) => (
-                <button key={r} type="button" className="k1-chip" onClick={() => setQuery(r)}>
-                  <Clock className="size-4" aria-hidden /> {r}
-                </button>
+                <span key={r} className="k1-chip-wrap" data-k1-recent-item>
+                  <button type="button" className="k1-chip" onClick={() => setQuery(r)}>
+                    <Clock className="size-4" aria-hidden /> {r}
+                  </button>
+                  <button type="button" className="k1-chip-x" aria-label={k("removeRecent", lang).replace("{q}", r)} onClick={() => recent.remove(r)} data-k1-recent-x>
+                    <X className="size-4" aria-hidden />
+                  </button>
+                </span>
               ))}
             </div>
           </div>
