@@ -37,3 +37,4 @@ dist-esri
 # Wrangler lokale Secrets
 .dev.vars
 .dev.vars.*
+tsconfig.tsbuildinfo
