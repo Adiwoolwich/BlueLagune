@@ -67,7 +67,7 @@ export function StationPanel({ stations }: { stations: Station[] }) {
   return <div className="flex h-full min-h-0 flex-1 flex-col">{body}</div>;
 }
 
-export function SearchBar({ overlay }: { overlay?: boolean }) {
+export function SearchBar({ overlay, noRadius }: { overlay?: boolean; noRadius?: boolean }) {
   useLang();
   const query = useAppStore((s) => s.query);
   const setQuery = useAppStore((s) => s.setQuery);
@@ -132,7 +132,7 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
           compactMenu={overlay}
         />
       </div>
-      <label
+      {noRadius ? null : <label
         className={
           overlay
             ? "relative block w-[6rem] shrink-0 self-center"
@@ -164,7 +164,7 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
               : "pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 border-x-4 border-t-[5px] border-x-transparent border-t-muted"
           }
         />
-      </label>
+      </label>}
     </div>
   );
 }

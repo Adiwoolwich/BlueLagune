@@ -27,7 +27,8 @@ async function setSheet(page: Page, step: "peek" | "mid" | "full") {
   await page.waitForTimeout(300);
 }
 
-for (const design of ["", "teal"]) {
+// Mit ?design=* gilt das neue Gerüst (e2e/geruest.spec.ts); hier nur die heutige Optik.
+for (const design of [""]) {
   for (const width of [320, 390, 1280]) {
     for (const step of ["peek", "mid", "full"] as const) {
       test(`Basis: keine Überlappung ${design || "default"} ${width} px, Sheet ${step}`, async ({ page }) => {

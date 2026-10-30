@@ -19,6 +19,7 @@ import { cn } from "./lib/utils";
 import { installTapHaptic } from "./lib/tap";
 import { OfflineNotice } from "./components/offline-panel";
 import { BottomSheet } from "./components/BottomSheet";
+import { DesignShell } from "./components/shell/design-shell";
 
 const SKIP_KEY = "bl-skip-landing";
 
@@ -234,6 +235,11 @@ function MapApp() {
         }}
       />
     );
+  }
+
+  // Neues Gerüst nur bei ?design=* (Tokens gesetzt); ohne Parameter bleibt alles wie bisher.
+  if (typeof document !== "undefined" && document.documentElement.dataset.design) {
+    return <DesignShell stations={stations} initial={initial} inViewCount={inViewCount} offlineOpen={openOffline} />;
   }
 
   return (

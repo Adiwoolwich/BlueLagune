@@ -48,6 +48,11 @@ function accentColor(): string {
   return getComputedStyle(document.documentElement).getPropertyValue("--bl-accent").trim() || "#1f5fd1";
 }
 
+/** Gerüst (?design=*) auf schmalen Screens: Pins steuern das Karussell statt direkt das Detail. */
+function shellCarousel(): boolean {
+  return typeof document !== "undefined" && document.documentElement.dataset.shell === "g" && window.innerWidth < 1024;
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
@@ -268,6 +273,18 @@ function MapChrome({
     };
   }, [selected, map]);
 
+  const focusId = useAppStore((s) => s.focusId);
+  const focused = focusId ? stations.find((s) => s.id === focusId) : undefined;
+  useEffect(() => {
+    if (selected || !focused || !hasPreciseCoords(focused)) return;
+    const zoom = Math.max(map.getZoom(), 11);
+    // Karussell unten: Ziel etwas oberhalb der Mitte halten.
+    const size = map.getSize();
+    const target = map.unproject(map.project([focused.lat, focused.lng], zoom).add([0, size.y * 0.14]), zoom);
+    if (prefersReducedMotion()) map.setView(target, zoom, { animate: false });
+    else map.flyTo(target, zoom, { duration: 0.5, easeLinearity: 0.35 });
+  }, [focused, selected, map]);
+
   const fitKey = `${place?.name ?? ""}|${userPos?.lat ?? ""}:${userPos?.lng ?? ""}|${routePath?.from ?? ""}>${routePath?.to ?? ""}:${routePath?.source ?? ""}`;
   const prevFit = useRef("");
   useEffect(() => {
@@ -325,8 +342,16 @@ function MapChrome({
 function ClusterLayer({ stations }: { stations: Station[] }) {
   useLang();
   const map = useMap();
-  const selectedId = useAppStore((s) => s.selectedId);
-  const select = useAppStore((s) => s.select);
+  const realSelectedId = useAppStore((s) => s.selectedId);
+  const focusId = useAppStore((s) => s.focusId);
+  const setFocus = useAppStore((s) => s.setFocus);
+  // Gerüst: der im Karussell fokussierte Pin wird wie der aktive dargestellt.
+  const selectedId = realSelectedId ?? (shellCarousel() ? focusId : null);
+  const selectRaw = useAppStore((s) => s.select);
+  const select = (id: string) => {
+    if (shellCarousel() && !realSelectedId) setFocus(id);
+    else selectRaw(id);
+  };
   const reports = useAppStore((s) => s.reports);
   const serverReports = useAppStore((s) => s.serverReports);
   const [, setTick] = useState(0);

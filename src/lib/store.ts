@@ -95,6 +95,9 @@ type AppState = {
   panel: "list" | "detail" | "saved" | "route" | "add";
   extraStations: Station[];
   sheet: "peek" | "mid" | "full";
+  /** Gerüst (?design=*): im Karussell fokussierte Station (Fly-to, ohne Detail zu öffnen). */
+  focusId: string | null;
+  setFocus: (id: string | null) => void;
   mapLabels: boolean;
   mapStyle: "map" | "sat";
   setMapStyle: (v: "map" | "sat") => void;
@@ -150,6 +153,8 @@ export const useAppStore = create<AppState>()(
       panel: "list",
       extraStations: [],
       sheet: "mid",
+      focusId: null,
+      setFocus: (focusId) => set({ focusId }),
       mapLabels: true,
       mapStyle: "map",
       listSort: "distance",
