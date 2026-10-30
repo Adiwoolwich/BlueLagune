@@ -39,3 +39,16 @@ for (const width of [320, 390]) {
     }
   });
 }
+
+test("Platzhalter im Suchfeld bei 320 px voll sichtbar", async ({ page }) => {
+  await openMap(page, { width: 320, height: 640 });
+  const inp = page.locator("[data-bl-search] input").first();
+  const r = await inp.evaluate((el: HTMLInputElement) => {
+    const cs = getComputedStyle(el);
+    const ctx = document.createElement("canvas").getContext("2d")!;
+    ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    return { ph: el.placeholder, need: ctx.measureText(el.placeholder).width, avail: el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) };
+  });
+  expect(r.ph.length).toBeGreaterThan(0);
+  expect(r.need, `Platzhalter "${r.ph}" abgeschnitten`).toBeLessThanOrEqual(r.avail);
+});
