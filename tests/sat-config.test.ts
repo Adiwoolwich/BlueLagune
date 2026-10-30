@@ -17,14 +17,15 @@ describe("Satellit: eine Konfigurationsstelle, Esri mit Key, EOX als Rückfall",
     expect(s.maxNativeZoom).toBe(15);
     expect(satTileUrl(s, "")).toContain("tiles.maps.eox.at");
   });
-  it("mit Key: Esri World Imagery über Static Basemap Tiles, Token in URL, 512er-Kacheln", () => {
+  it("mit Key: Esri World Imagery (Location Platform, ibasemaps-api), Token in URL, 256er-Kacheln", () => {
     const s = satSource("TESTKEY");
     expect(s.id).toBe("esri-imagery");
     const url = satTileUrl(s, "TESTKEY")!;
-    expect(url).toMatch(/^https:\/\/static-map-tiles-api\.arcgis\.com\/arcgis\/rest\/services\/static-basemap-tiles-service\/v1\/arcgis\/imagery\/static\/tile\/\{z\}\/\{y\}\/\{x\}\?token=TESTKEY$/);
-    expect(s.tileSize).toBe(512);
-    expect(s.zoomOffset).toBe(-1);
+    expect(url).toBe("https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=TESTKEY");
+    expect(s.tileSize ?? 256).toBe(256);
+    expect(s.zoomOffset ?? 0).toBe(0);
   });
+
   it("Esri-Attribution: Powered by Esri, Bildquellen Maxar/Earthstar, OSM", () => {
     const a = SAT_SOURCES["esri-imagery"].attribution;
     expect(a).toContain("Powered by");
