@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { SAT_LATER_KEY, revokeSat, useSatConsent } from "@/lib/sat-preview";
+import { LEGAL_TOKEN_CSS } from "@/theme/legal-tokens";
+import "@/theme/legal-sat.css";
 import { LEGAL, hasCompleteImprint } from "@/lib/legal";
 import { SiteFooter } from "@/components/site-footer";
 import { t, useLang } from "@/lib/i18n";
@@ -87,17 +89,18 @@ function SatPreviewPrivacy() {
     }
   }
   return (
-    <section id="satellitenvorschau" aria-labelledby="satellitenvorschau-h" className="space-y-3">
+    <section id="satellitenvorschau" aria-labelledby="satellitenvorschau-h" className="bl-legal-tokens space-y-3">
+      <style>{LEGAL_TOKEN_CSS}</style>
       <h2 id="satellitenvorschau-h">{ui.h}</h2>
       <p>{t("privacySatP")}</p>
-      <p data-bl-sat-status className="text-fg">
+      <p data-bl-sat-status className="bl-sat-status">
         {ui.st} <strong>{allowed ? ui.yes : ui.no}</strong>
       </p>
       <button type="button" onClick={revoke} disabled={!allowed}
-        className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 font-semibold text-primary-fg disabled:bg-surface disabled:text-fg disabled:ring-1 disabled:ring-border">
+        data-bl-sat-revoke className="bl-sat-revoke">
         {ui.btn}
       </button>
-      {msg ? <p role="status" className="text-fg">{msg}</p> : null}
+      {msg ? <p role="status" className="bl-sat-msg">{msg}</p> : null}
     </section>
   );
 }
