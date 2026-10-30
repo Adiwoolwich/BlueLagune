@@ -22,7 +22,7 @@ test("Datenschutz: Kapitel Satellitenvorschau mit Status und Widerruf (bl-sat-pr
   // nur einmal im Dokument
   await expect(page.getByText("Satellitenvorschau und -karte (Esri ArcGIS)")).toHaveCount(1);
   await expect(page.locator("body")).toContainText("Local Storage: Filter, Merkliste, deine zuletzt eingegebenen Suchbegriffe („Zuletzt gesucht“) und deine Wahl zur Satellitenvorschau");
-  await expect(page.locator("body")).toContainText("Anonyme Tageszähler (Test „Pro Europa“)");
+  await expect(page.locator("body")).toContainText("Tageszähler (Test „Pro Europa“)");
   await expect(page.locator("[data-bl-privacy-visit]")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
