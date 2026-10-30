@@ -136,7 +136,7 @@
   position: absolute; z-index: 35; left: 8px; right: 8px; bottom: calc(var(--bl-attr-h) + 8px);
   max-height: calc(100dvh - var(--bl-g-top-h) - var(--bl-attr-h) - 16px); overflow-y: auto;
   display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: var(--bl-radius-sheet);
-  box-shadow: var(--bl-shadow-2); animation: bl-g-up 280ms var(--bl-spring, var(--bl-easing)) both;
+  box-shadow: var(--bl-shadow-2); animation: bl-g-up var(--bl-dur-ui) var(--bl-spring, var(--bl-easing)) both;
 }
 :root[data-shell="g"] .bl-g-detail-inline { position: static; max-height: none; flex: 1; min-height: 0; border: 0; box-shadow: none; background: transparent; padding: 6px 2px; -webkit-backdrop-filter: none; backdrop-filter: none; }
 :root[data-shell="g"] .bl-g-detail-head { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
@@ -168,7 +168,7 @@
 :root[data-shell="g"] .bl-g-list {
   position: absolute; z-index: 35; left: 0; right: 0; top: var(--bl-g-top-h); bottom: var(--bl-attr-h);
   display: flex; flex-direction: column; border-radius: var(--bl-radius-sheet) var(--bl-radius-sheet) 0 0; border-bottom: 0;
-  box-shadow: var(--bl-shadow-2); animation: bl-g-up 280ms var(--bl-spring, var(--bl-easing)) both;
+  box-shadow: var(--bl-shadow-2); animation: bl-g-up var(--bl-dur-ui) var(--bl-spring, var(--bl-easing)) both;
 }
 :root[data-shell="g"] .bl-g-list-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 4px 16px; touch-action: none; }
 :root[data-shell="g"] .bl-g-list-body, :root[data-shell="g"] .bl-g-side-body { display: flex; min-height: 0; flex: 1; flex-direction: column; gap: 6px; padding: 0 14px 8px; overflow: hidden; }
@@ -218,3 +218,24 @@
   :root[data-shell="g"] :is(.bl-g-icon, .bl-g-chip, .bl-g-card, .bl-g-btn) { transition: none !important; }
   :root[data-shell="g"] .bl-g-carousel { scroll-behavior: auto; }
 }
+
+/* ===== Satelliten-Vorschau (SatPreview) – nur --bl-*-Tokens ===== */
+.bl-sat { position: relative; display: block; width: 100%; overflow: hidden; border-radius: var(--bl-radius-lg); background: var(--bl-bg); isolation: isolate; }
+.bl-sat-grid { position: absolute; width: 512px; height: 512px; }
+.bl-sat-tile { position: absolute; width: 256px; height: 256px; user-select: none; }
+.bl-sat-vector { position: absolute; inset: 0; background:
+  radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--bl-accent) 18%, transparent), transparent 60%),
+  repeating-linear-gradient(var(--bl-sat-rot, 0deg), transparent 0 22px, color-mix(in srgb, var(--bl-border) 60%, transparent) 22px 23px),
+  color-mix(in srgb, var(--bl-chip-bg) 85%, var(--bl-bg)); }
+.bl-sat-road { position: absolute; left: -10%; width: 120%; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--bl-text-muted) 45%, transparent); }
+.bl-sat-road-a { top: 58%; transform: rotate(var(--bl-sat-rot, 0deg)); }
+.bl-sat-road-b { top: 30%; transform: rotate(calc(var(--bl-sat-rot, 0deg) + 70deg)); height: 4px; }
+.bl-sat-block { position: absolute; right: 14%; top: 18%; width: 22%; height: 26%; border-radius: 4px; background: color-mix(in srgb, var(--bl-border) 80%, transparent); }
+.bl-sat-pin { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -18px 0 0 -9px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+  background: var(--bl-accent-warm); border: 2px solid var(--bl-accent-contrast); box-shadow: 0 0 14px var(--bl-glow); z-index: 2; }
+.bl-sat-attr { position: absolute; right: 0; bottom: 0; z-index: 3; padding: 2px 6px; font-size: 10px; line-height: 1.3; color: var(--bl-text);
+  background: color-mix(in srgb, var(--bl-bg) 70%, transparent); border-top-left-radius: 6px; }
+.bl-sat-mock { color: var(--bl-accent-warm); text-transform: uppercase; letter-spacing: .04em; }
+.bl-sat-consent { position: absolute; left: 8px; bottom: 8px; z-index: 3; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px;
+  border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--bl-text); background: var(--bl-surface-glass); border: 1px solid var(--bl-border); }
+.bl-sat-consent:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }

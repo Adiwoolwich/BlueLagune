@@ -35,7 +35,7 @@ self.addEventListener("fetch", (event) => {
   } catch {
     return;
   }
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/mock-sat/")) return;
   if (NO_CACHE_HOSTS.some((h) => url.hostname === h || url.hostname.endsWith("." + h))) return;
 
   if (TILE_HOSTS.some((h) => url.hostname === h || url.hostname.endsWith("." + h))) {
