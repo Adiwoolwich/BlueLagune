@@ -32,6 +32,10 @@ type StationProps = { id: string };
 const iconCache = new Map<string, L.DivIcon>();
 
 // Eigenes Tropfen-Glyph (BlueLagune), kein fremdes Icon.
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
 const DROP_GLYPH = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="#ffffff" d="M12 2.5S5.5 10.4 5.5 15a6.5 6.5 0 0 0 13 0C18.5 10.4 12 2.5 12 2.5z"/></svg>`;
 
 function pinIcon(color: string, selected: boolean) {
@@ -180,12 +184,14 @@ function MapChrome({
   useEffect(() => {
     if (!selected || !hasPreciseCoords(selected)) return;
     const zoom = Math.max(map.getZoom(), 12);
-    map.flyTo([selected.lat, selected.lng], zoom, { duration: 0.45 });
+    // Weicher Fly-to (≤ 600 ms); bei reduced-motion springt die Karte ohne Animation.
+    if (prefersReducedMotion()) map.setView([selected.lat, selected.lng], zoom, { animate: false });
+    else map.flyTo([selected.lat, selected.lng], zoom, { duration: 0.6, easeLinearity: 0.35 });
     const shift = () => {
       if (window.innerWidth >= 768) return;
       const currentSheet = sheetRef.current;
       const fraction = currentSheet === "full" ? 0.28 : currentSheet === "mid" ? 0.18 : 0.08;
-      map.panBy([0, map.getSize().y * fraction], { animate: true, duration: 0.3 });
+      map.panBy([0, map.getSize().y * fraction], { animate: !prefersReducedMotion(), duration: 0.22 });
     };
     map.once("moveend", shift);
     return () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapHost } from "./components/map-host";
 import {
   MapRoundButtons,
@@ -18,6 +18,7 @@ import { t, useLang } from "./lib/i18n";
 import { cn } from "./lib/utils";
 import { installTapHaptic } from "./lib/tap";
 import { OfflineNotice } from "./components/offline-panel";
+import { BottomSheet } from "./components/BottomSheet";
 
 const SKIP_KEY = "bl-skip-landing";
 
@@ -178,151 +179,6 @@ function Landing({ onDone }: { onDone: (openOffline?: boolean) => void }) {
   );
 }
 
-/** Sheet snap heights in dvh (phone). Mid is lower on md+. */
-function sheetSnaps(): { peek: number; mid: number; full: number } {
-  const mid = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches ? 36.5 : 42;
-  return { peek: 24, mid, full: 90 };
-}
-
-function sheetH(sheet: "peek" | "mid" | "full"): number {
-  return sheetSnaps()[sheet];
-}
-
-function nearestSheet(h: number, snaps: ReturnType<typeof sheetSnaps>): "peek" | "mid" | "full" {
-  const entries: ["peek" | "mid" | "full", number][] = [
-    ["peek", snaps.peek],
-    ["mid", snaps.mid],
-    ["full", snaps.full],
-  ];
-  let best: "peek" | "mid" | "full" = "mid";
-  let bestD = Infinity;
-  for (const [k, v] of entries) {
-    const d = Math.abs(h - v);
-    if (d < bestD) {
-      bestD = d;
-      best = k;
-    }
-  }
-  return best;
-}
-
-function rubber(h: number, min: number, max: number): number {
-  if (h < min) return min - (min - h) * 0.22;
-  if (h > max) return max + (h - max) * 0.22;
-  return h;
-}
-
-function SheetHandle({
-  label,
-  sheet,
-  liveH,
-  onLiveH,
-  onSnap,
-  onTap,
-}: {
-  label: string;
-  sheet: "peek" | "mid" | "full";
-  liveH: number | null;
-  onLiveH: (h: number | null) => void;
-  onSnap: (s: "peek" | "mid" | "full") => void;
-  onTap: () => void;
-}) {
-  const startY = useRef<number | null>(null);
-  const startH = useRef(0);
-  const curH = useRef(0);
-  const lastY = useRef(0);
-  const lastT = useRef(0);
-  const vel = useRef(0);
-  const dragged = useRef(false);
-
-  function begin(y: number, target?: HTMLDivElement, pointerId?: number) {
-    startY.current = y;
-    lastY.current = y;
-    lastT.current = performance.now();
-    vel.current = 0;
-    dragged.current = false;
-    startH.current = liveH ?? sheetH(sheet);
-    curH.current = startH.current;
-    onLiveH(startH.current);
-    if (target && pointerId != null) {
-      try {
-        target.setPointerCapture(pointerId);
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  function move(y: number) {
-    if (startY.current == null) return;
-    const now = performance.now();
-    const dt = Math.max(1, now - lastT.current);
-    vel.current = (y - lastY.current) / dt; // px/ms; +down
-    lastY.current = y;
-    lastT.current = now;
-    if (Math.abs(y - startY.current) > 6) dragged.current = true;
-    const snaps = sheetSnaps();
-    const vh = window.innerHeight || 1;
-    // finger up → taller sheet
-    const deltaVh = ((startY.current - y) / vh) * 100;
-    const nextH = rubber(startH.current + deltaVh, snaps.peek, snaps.full);
-    curH.current = nextH;
-    onLiveH(nextH);
-  }
-
-  function end() {
-    if (startY.current == null) return;
-    startY.current = null;
-    const snaps = sheetSnaps();
-    // Use ref — React state liveH is stale in the same gesture
-    const h = curH.current;
-    const v = vel.current; // +down
-    let next: "peek" | "mid" | "full";
-    // Tesla-near: low velocity threshold, clear step on flick
-    if (v < -0.45) {
-      next = h < snaps.mid - 2 ? "mid" : "full";
-    } else if (v > 0.45) {
-      next = h > snaps.mid + 2 ? "mid" : "peek";
-    } else {
-      next = nearestSheet(h, snaps);
-    }
-    onLiveH(null);
-    if (!dragged.current && Math.abs(h - startH.current) < 1.2) onTap();
-    else onSnap(next);
-  }
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={label}
-      className="bl-sheet-handle flex h-11 shrink-0 touch-none select-none items-center justify-center pt-1"
-      style={{ touchAction: "none" }}
-      onPointerDown={(e) => {
-        e.preventDefault();
-        begin(e.clientY, e.currentTarget, e.pointerId);
-      }}
-      onPointerMove={(e) => move(e.clientY)}
-      onPointerUp={end}
-      onPointerCancel={end}
-      onKeyDown={(e) => {
-        if (e.key === "ArrowUp") {
-          e.preventDefault();
-          onSnap(sheet === "peek" ? "mid" : "full");
-        } else if (e.key === "ArrowDown") {
-          e.preventDefault();
-          onSnap(sheet === "full" ? "mid" : "peek");
-        } else if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onTap();
-        }
-      }}
-    >
-      <span className="h-1 w-10 rounded-full bg-border-strong" />
-    </div>
-  );
-}
-
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   if (path === "/impressum") return <ImpressumPage />;
@@ -343,29 +199,6 @@ function MapApp() {
   const panel = useAppStore((s) => s.panel);
   const sheet = useAppStore((s) => s.sheet);
   const setSheet = useAppStore((s) => s.setSheet);
-  const sheetRef = useRef<HTMLElement>(null);
-  const liveHRef = useRef<number | null>(null);
-  const liveRaf = useRef<number | null>(null);
-  const applyLiveSheet = (h: number | null) => {
-    const el = sheetRef.current;
-    if (!el) return;
-    liveHRef.current = h;
-    if (liveRaf.current != null) {
-      cancelAnimationFrame(liveRaf.current);
-      liveRaf.current = null;
-    }
-    el.style.transition = "none";
-    if (h == null) {
-      el.style.setProperty("--sheet-offset", (sheetSnaps().full - sheetH(sheet)) + "dvh");
-      el.style.removeProperty("transition");
-      return;
-    }
-    liveRaf.current = requestAnimationFrame(() => {
-      liveRaf.current = null;
-      const live = liveHRef.current;
-      if (live != null) el.style.setProperty("--sheet-offset", (sheetSnaps().full - live) + "dvh");
-    });
-  };
   const [guide, setGuide] = useState(false);
   const routePath = useAppStore((s) => s.routePath);
   const bounds = useAppStore((s) => s.bounds);
@@ -390,13 +223,6 @@ function MapApp() {
     if (initial.id) s.select(initial.id);
   }, [initial]);
 
-  function cycleSheet() {
-    if (panel !== "list") {
-      setSheet(sheet === "full" ? "mid" : "full");
-      return;
-    }
-    setSheet(sheet === "peek" ? "mid" : sheet === "mid" ? "full" : "peek");
-  }
 
 
   if (showLanding) {
@@ -436,30 +262,12 @@ function MapApp() {
           </div>
           <OfflineNotice />
         </div>
-        <div data-bl-rail className="pointer-events-auto absolute right-3 top-[max(4.5rem,9dvh)] z-30 lg:right-4 lg:top-4">
+        <div data-bl-rail data-sheet={sheet} className="pointer-events-auto absolute right-3 top-[max(4.5rem,9dvh)] z-30 lg:right-4 lg:top-4">
           <MapRoundButtons offlineOpen={openOffline} />
         </div>
       </main>
 
-      <aside
-        ref={sheetRef}
-        className="bl-sheet absolute inset-x-0 bottom-0 z-20 flex h-[90dvh] min-h-0 flex-col rounded-t-[1.25rem] bg-sheet text-fg shadow-[0_-4px_18px_rgb(0_0_0/0.12)] transition-transform duration-150 ease-out"
-        style={{
-          transform: "translate3d(0, var(--sheet-offset), 0)",
-          "--sheet-offset": (sheetSnaps().full - sheetH(sheet)) + "dvh",
-        } as React.CSSProperties}
-      >
-        <SheetHandle
-          label={t("sheetResize")}
-          sheet={sheet}
-          liveH={liveHRef.current}
-          onLiveH={applyLiveSheet}
-          onSnap={(s) => {
-            applyLiveSheet(null);
-            setSheet(s);
-          }}
-          onTap={cycleSheet}
-        />
+      <BottomSheet sheet={sheet} onSnap={setSheet} cycleSteps={panel === "list" ? ["peek", "mid", "full"] : ["mid", "full"]} label={t("sheetResize")}>
         <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {panel === "list" ? <SearchAndFilters count={inViewCount} compact={sheet === "peek"} /> : null}
           {routePath?.source === "straight" && panel === "list" && sheet !== "peek" ? (
@@ -469,7 +277,7 @@ function MapApp() {
             <StationPanel stations={stations} />
           </div>
         </div>
-      </aside>
+      </BottomSheet>
 
       {guide ? <GuideOverlay onClose={() => setGuide(false)} /> : null}
     </div>

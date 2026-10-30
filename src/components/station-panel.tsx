@@ -44,7 +44,7 @@ function Chip({
       aria-label={label}
       title={label}
       className={cn(
-        "bl-tap inline-flex h-11 min-h-11 shrink-0 items-center rounded-full px-2.5 text-[13px] font-medium",
+        "bl-tap bl-chip inline-flex h-11 min-h-11 shrink-0 items-center rounded-full px-2.5 text-[13px] font-medium",
         active ? "bg-primary text-primary-fg" : "bg-surface text-fg ring-1 ring-border hover:ring-border-strong",
       )}
     >
