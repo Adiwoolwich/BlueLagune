@@ -322,3 +322,33 @@
 :root[data-k="1"][data-clarity="1"] main :is(.leaflet-tile-pane, canvas) { filter: contrast(1.12) saturate(1.18) brightness(1.03); }
 :root[data-k="1"] { --bl-g-car-h: 268px; --bl-g-top-h: calc(max(10px, env(safe-area-inset-top)) + 56px + 14px); }
 .bl-sat-pin, .bl-sat-attr { pointer-events: none; }
+
+/* ===== Konzept 1 Ausbau: Pro-Chip-Slot (Inhalt miniHard) ===== */
+:root[data-k="1"] .k1-pro-chip { position: absolute; z-index: 31; right: 12px; top: calc(var(--bl-g-top-h) + 2px); display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--bl-text);
+  background: var(--bl-surface-glass); border: 1px solid var(--bl-border); box-shadow: var(--bl-shadow-2), 0 0 14px var(--bl-glow);
+  -webkit-backdrop-filter: blur(var(--bl-blur)); backdrop-filter: blur(var(--bl-blur)); }
+:root[data-k="1"] .k1-pro-chip svg { color: var(--bl-accent-warm); }
+:root[data-k="1"] .k1-pro-chip:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }
+
+/* ===== Konzept 1 Desktop ≥ 1024 px: Panel links (Suche, Tabs als Navigation, Inhalt), Karte rechts ===== */
+@media (min-width: 1024px) {
+  :root[data-k="1"] { --k1-panel-w: 400px; --k1-tab-h: 56px; }
+  :root[data-k="1"] .k1 > main { left: var(--k1-panel-w); }
+  :root[data-k="1"] .k1 > .bl-map-fade, :root[data-k="1"] .k1 main .bl-map-fade { display: none; }
+  :root[data-k="1"] .k1-panel-bg { position: absolute; z-index: 20; left: 0; top: 0; bottom: 0; width: var(--k1-panel-w);
+    background: var(--bl-surface); border-right: 1px solid var(--bl-border); box-shadow: var(--bl-shadow-2); }
+  :root[data-k="1"] .k1-top { right: auto; width: var(--k1-panel-w); padding: 14px 14px 0; z-index: 41; }
+  :root[data-k="1"] .k1-tabbar { top: calc(14px + 56px + 10px); bottom: auto; left: 0; width: var(--k1-panel-w); height: var(--k1-tab-h); z-index: 41;
+    padding: 0 8px; border-top: 0; border-bottom: 1px solid var(--bl-border); background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :root[data-k="1"] .k1-tab { flex-direction: row; gap: 6px; font-size: 12.5px; border-radius: 12px; }
+  :root[data-k="1"] .k1-tab[aria-current="page"] { background: var(--bl-chip-bg); }
+  :root[data-k="1"] .k1-sheet, :root[data-k="1"] .bl-g-detail { left: 0; right: auto; width: var(--k1-panel-w); top: calc(14px + 56px + 10px + var(--k1-tab-h)); bottom: 0;
+    max-height: none; border: 0; border-radius: 0; box-shadow: none; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; animation: none; z-index: 40; }
+  :root[data-k="1"] .k1-sheet-search { top: 0; z-index: 45; background: var(--bl-surface); padding-top: 14px; }
+  :root[data-k="1"] .k1-sheet-sm { top: calc(14px + 56px + 10px + var(--k1-tab-h)); }
+  :root[data-k="1"] .k1-tools { right: 16px; bottom: calc(var(--bl-attr-h) + 24px); }
+  :root[data-k="1"] .k1-pro-chip { top: 16px; right: 16px; }
+  :root[data-k="1"] .k1-ask { left: calc(var(--k1-panel-w) + 16px); right: auto; width: 380px; bottom: calc(var(--bl-attr-h) + 16px); }
+  :root[data-k="1"] .leaflet-top.leaflet-left { left: 0; }
+}

@@ -50,7 +50,7 @@ export function tx(k: keyof typeof TXT, lang: string, n?: number): string {
 
 const RADIUS_CYCLE = [5, 10, 20, 50, 100];
 
-function useDesktop(): boolean {
+export function useDesktop(): boolean {
   const q = "(min-width: 1024px)";
   const [on, setOn] = useState(() => typeof window !== "undefined" && window.matchMedia(q).matches);
   useEffect(() => {

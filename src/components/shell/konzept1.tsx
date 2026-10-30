@@ -11,7 +11,7 @@ import { copyShareUrl, shareUrl } from "../../lib/url-state";
 import { setLang, t, useLang, type Lang } from "../../lib/i18n";
 import { SAT_PREVIEW, askSat, revokeSat, useSatConsent, withSatConsent } from "../../lib/sat-preview";
 import { cn } from "../../lib/utils";
-import { Carousel, DetailCard, useOrigin, type ShellProps } from "./design-shell";
+import { Carousel, DetailCard, useDesktop, useOrigin, type ShellProps } from "./design-shell";
 
 /*
  * Konzept 1 (Tab-Bar): unten Karte · Liste · Favoriten · Pro · Mehr, oben eine große zentrale Suche.
@@ -70,6 +70,8 @@ const K: Record<string, L3> = {
   attr: { de: "Karte © OpenStreetMap, OpenFreeMap · Satellit: Powered by Esri", en: "Map © OpenStreetMap, OpenFreeMap · Satellite: Powered by Esri" },
   proTitle: { de: "Pro Europa · Vorschau", en: "Pro Europe · preview" },
   proText: { de: "Status-Alarme für deine Route, ganz Europa, Offline-Pakete. Vorschau – nichts wird berechnet.", en: "Status alerts for your route, all of Europe, offline packs. Preview – nothing is charged." },
+  nearby: { de: "Stationen im Kartenausschnitt", en: "Stations in view" },
+  proChip: { de: "Pro", en: "Pro" },
   proNote: { de: "Inhalt und Zähler kommen beim Zusammenführen aus pro-europa (ProModal).", en: "Content and counter come from pro-europa (ProModal) on merge." },
 };
 const k = (key: keyof typeof K, lang: Lang, n?: number) => {
@@ -371,13 +373,13 @@ function ProSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-function PanelSheet({ stations, title, onClose }: { stations: Station[]; title: string; onClose: () => void }) {
+function PanelSheet({ stations, title, onClose }: { stations: Station[]; title: string; onClose: (() => void) | null }) {
   const lang = useLang();
   return (
     <section className="k1-sheet k1-sheet-panel" aria-label={title} data-bl-list>
       <div className="k1-sheet-head">
         <p className="bl-g-title-sm flex-1">{title}</p>
-        <button type="button" className="bl-g-icon" aria-label={k("close", lang)} onClick={onClose}><X className="size-5" /></button>
+        {onClose ? <button type="button" className="bl-g-icon" aria-label={k("close", lang)} onClick={onClose}><X className="size-5" /></button> : null}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2">
         <StationPanel stations={stations} />
@@ -425,6 +427,7 @@ export function Konzept1Shell(props: ShellProps) {
   const [clarity, setClarity] = useState(false);
   const [sub, setSub] = useState<"route" | "add" | "details" | null>(null);
   const recent = useRecent();
+  const desktop = useDesktop();
 
   useEffect(() => {
     const el = document.documentElement;
@@ -474,9 +477,12 @@ export function Konzept1Shell(props: ShellProps) {
         onLanding={onLanding}
       />
     );
+  // Desktop (≥ 1024 px): Panel links ist nie leer – Karte-Tab zeigt Detail oder die Liste im Ausschnitt.
+  if (desktop && !overlay && !detail) overlay = <PanelSheet stations={stations} title={k("nearby", lang)} onClose={null} />;
 
   return (
-    <div className="relative h-dvh overflow-hidden bg-bg text-fg bl-g k1" data-chrome="map">
+    <div className="relative h-dvh overflow-hidden bg-bg text-fg bl-g k1" data-chrome="map" data-k1-layout={desktop ? "desktop" : "mobile"}>
+      {desktop ? <div className="k1-panel-bg" aria-hidden /> : null}
       <section className="sr-only">
         <h1>{t("srTitle")}</h1>
         <p>{t("srLead")}</p>
@@ -489,7 +495,23 @@ export function Konzept1Shell(props: ShellProps) {
         <BigSearch onOpen={() => setSearch(true)} />
         <OfflineNotice />
       </div>
-      {overlay ?? (
+      {/* Slot Pro-Chip auf der Karte (Inhalt/Metrik: miniHard, minihard/k1-pro). Bleibt sichtbar. */}
+      {!search ? (
+        <button type="button" className="k1-pro-chip" onClick={() => onTab("pro")} data-k1-pro-chip aria-label={k("proTitle", lang)}>
+          <Crown className="size-4" aria-hidden />
+          <span>{k("proChip", lang)}</span>
+        </button>
+      ) : null}
+      {desktop && detail ? (
+        <DetailCard station={detail} sat onMore={() => (setPanel("detail"), setSub("details"))} />
+      ) : null}
+      {desktop ? (
+        <>
+          {overlay && !detail ? overlay : null}
+          <MapTools clarity={clarity} setClarity={setClarity} />
+          <SatConsentPrompt className="k1-ask" />
+        </>
+      ) : overlay ?? (
         <>
           {detail ? null : <MapTools clarity={clarity} setClarity={setClarity} />}
           {detail ? (
@@ -502,7 +524,7 @@ export function Konzept1Shell(props: ShellProps) {
           )}
         </>
       )}
-      {overlay ? <SatConsentPrompt onlyWhenAsked className="k1-ask k1-ask-float" /> : null}
+      {overlay && !desktop ? <SatConsentPrompt onlyWhenAsked className="k1-ask k1-ask-float" /> : null}
       <TabBar tab={search ? "karte" : tab} onTab={onTab} />
     </div>
   );
