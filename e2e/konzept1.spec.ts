@@ -94,3 +94,11 @@ test("Konzept 1 Screens 390 px", async ({ page }) => {
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${OUT}/konzept1-menue-390.png` });
 });
+
+test("Rechtsseiten: Sprachumschalter im Footer nur DE/EN", async ({ page }) => {
+  for (const p of ["/impressum", "/datenschutz"]) {
+    await page.goto(p);
+    const g = page.locator("footer [role=group]").first();
+    await expect(g.locator("button")).toHaveText(["DE", "EN"]);
+  }
+});

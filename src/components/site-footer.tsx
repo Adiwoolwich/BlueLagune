@@ -56,15 +56,6 @@ export function SiteFooter({
         >
           {t("langEn")}
         </button>
-        <span aria-hidden>|</span>
-        <button
-          type="button"
-          onClick={() => setLang("nl")}
-          className={lang === "nl" ? "font-semibold text-fg" : "hover:text-fg"}
-          aria-pressed={lang === "nl"}
-        >
-          {t("langNl")}
-        </button>
       </span>
       <span aria-hidden className="text-subtle">
         ·
