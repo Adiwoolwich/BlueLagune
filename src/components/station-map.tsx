@@ -42,6 +42,12 @@ function designBaseStyle(dark: boolean) {
   return style;
 }
 
+/** Akzentfarbe aus den Theme-Tokens (--bl-accent), sonst heutiges Blau. */
+function accentColor(): string {
+  if (typeof document === "undefined") return "#1f5fd1";
+  return getComputedStyle(document.documentElement).getPropertyValue("--bl-accent").trim() || "#1f5fd1";
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
@@ -635,10 +641,10 @@ export function StationMap({
           center={[searchOrigin.lat, searchOrigin.lng]}
           radius={radiusKm * 1000}
           pathOptions={{
-            color: "#1f5fd1",
+            color: accentColor(),
             weight: 1.5,
             opacity: 0.6,
-            fillColor: "#1f5fd1",
+            fillColor: accentColor(),
             fillOpacity: 0.06,
           }}
         />
@@ -647,7 +653,7 @@ export function StationMap({
         <Polyline
           positions={routeLine}
           pathOptions={{
-            color: routePath?.source === "straight" ? "#b45309" : "#1f5fd1",
+            color: routePath?.source === "straight" ? "#b45309" : accentColor(),
             weight: 5,
             opacity: 0.92,
           }}

@@ -86,7 +86,7 @@
 }
 :root[data-design] .bl-list-row > button::before {
   content: ""; position: absolute; left: 7px; top: 12px; bottom: 12px; width: 4px; border-radius: 4px;
-  background: var(--pin); box-shadow: 0 0 10px color-mix(in srgb, var(--pin) 60%, transparent);
+  background: var(--bl-tile-accent, var(--pin)); box-shadow: 0 0 10px color-mix(in srgb, var(--bl-tile-accent, var(--pin)) 60%, transparent);
 }
 :root[data-design] .bl-list-row > button:hover {
   transform: translateY(-2px);

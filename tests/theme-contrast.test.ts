@@ -52,6 +52,10 @@ for (const [name, v] of Object.entries(all)) {
         for (const bg of glassBgs(t).slice(1)) expect(ratio(parse(t["accent-warm"]), bg)).toBeGreaterThanOrEqual(4.5);
         expect(ratio(parse(t["accent-warm"]), parse(t["chip-bg"]))).toBeGreaterThanOrEqual(4.5);
       });
+      it("Kachel-Akzentstreifen (tile-accent) ≥ 3:1 auf Glas und Fläche", () => {
+        expect(ratio(parse(t["tile-accent"]), parse(t.surface))).toBeGreaterThanOrEqual(3);
+        for (const bg of glassBgs(t).slice(1)) expect(ratio(parse(t["tile-accent"]), bg)).toBeGreaterThanOrEqual(3);
+      });
       it("Fokus und aktiver Marker ≥ 3:1 auf Fläche", () => {
         expect(ratio(parse(t.focus), parse(t.surface))).toBeGreaterThanOrEqual(3);
         expect(ratio(parse(t["marker-active"]), parse(t.bg))).toBeGreaterThanOrEqual(3);
