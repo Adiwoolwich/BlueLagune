@@ -1,0 +1,76 @@
+/* Abbildung der Theme-Tokens (--bl-*) auf die Tailwind-Farben. Greift nur mit ?design=… (data-design),
+   ohne Parameter bleibt die heutige Optik aus styles.css unverändert. */
+:root[data-design] {
+  --color-bg: var(--bl-bg);
+  --color-bg-elevated: var(--bl-bg);
+  --color-sheet: var(--bl-surface);
+  --color-chrome: var(--bl-surface);
+  --color-chrome-fg: var(--bl-text);
+  --color-fg: var(--bl-text);
+  --color-text: var(--bl-text);
+  --color-muted: var(--bl-text-muted);
+  --color-subtle: var(--bl-text-muted);
+  --color-primary: var(--bl-accent);
+  --color-primary-fg: var(--bl-accent-contrast);
+  --color-lagoon: var(--bl-accent);
+  --color-border-strong: var(--bl-border);
+  --color-surface: var(--bl-chip-bg);
+  --font-sans: var(--bl-family-ui);
+  --shadow-btn: var(--bl-shadow-1);
+  --shadow-panel: var(--bl-shadow-2);
+}
+:root[data-design] [data-chrome="map"] { font-family: var(--bl-family-ui); }
+:root[data-design] .bl-num, :root[data-design] .tabular-nums { font-family: var(--bl-family-num); }
+
+/* Glasflächen: Blur nur, wo unterstützt; sonst deckende Fläche (Kontrast bleibt gesichert). */
+.bl-glass { background: var(--color-sheet); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-design] .bl-glass {
+    background: var(--bl-surface-glass);
+    -webkit-backdrop-filter: blur(var(--bl-blur)) saturate(1.2);
+    backdrop-filter: blur(var(--bl-blur)) saturate(1.2);
+  }
+}
+:root[data-design] aside.bl-sheet { border-radius: var(--bl-radius-sheet) var(--bl-radius-sheet) 0 0; }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-design] aside.bl-sheet { background: var(--bl-surface-glass); }
+}
+:root[data-design] :focus-visible { outline-color: var(--bl-focus); }
+
+/* Cluster und Marker */
+:root[data-design] .bl-cl {
+  background: var(--bl-cluster-bg); color: var(--bl-cluster-text);
+  box-shadow: 0 0 0 2px var(--bl-accent), var(--bl-shadow-1);
+  transition: transform var(--bl-dur-fast) var(--bl-easing);
+}
+:root[data-design] .bl-cl:hover { transform: scale(1.06); }
+
+/* Aktiver Marker: leichter Puls (Ring), aus bei reduced-motion. Gilt für alle Designs inkl. Default. */
+:root[data-design] .bl-sel { position: relative; }
+:root[data-design] .bl-sel::after {
+  content: ""; position: absolute; left: 50%; bottom: -4px; width: 18px; height: 8px; margin-left: -9px;
+  border-radius: 50%; background: var(--bl-marker-active, #3e6ae1); opacity: 0;
+  animation: bl-pulse 1.8s ease-out infinite; pointer-events: none;
+}
+@keyframes bl-pulse {
+  0% { transform: scale(0.6); opacity: 0.55; }
+  70%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* Filter-Chips */
+:root[data-design] .bl-chip {
+  background: var(--bl-chip-bg); color: var(--bl-chip-text); border-radius: 999px;
+  transition: background-color var(--bl-dur-fast) var(--bl-easing), color var(--bl-dur-fast) var(--bl-easing);
+}
+:root[data-design] .bl-chip[aria-pressed="true"] { background: var(--bl-chip-active-bg); color: var(--bl-chip-active-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-sel::after { animation: none !important; opacity: 0 !important; }
+  aside.bl-sheet { transition: none !important; }
+  .bl-cl, .bl-chip { transition: none !important; }
+}
+
+/* Rail-Knöpfe nie über der Liste: bei vollem Sheet (mobil/Tablet) ausblenden. Gilt für alle Designs. */
+@media (max-width: 1023px) {
+  [data-bl-rail][data-sheet="full"] { visibility: hidden; opacity: 0; pointer-events: none; }
+}

@@ -28,3 +28,13 @@ coverage/
 # Misc
 *.local
 .cache/
+node_modules
+dist
+test-results
+pids.txt
+dist-esri
+
+# Wrangler lokale Secrets
+.dev.vars
+.dev.vars.*
+tsconfig.tsbuildinfo

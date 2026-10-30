@@ -1,0 +1,24 @@
+/* Datenschutz → Satellitenvorschau: Status + Widerruf nur über var(--bl-*) (Tokens: legal-tokens.ts). */
+.bl-sat-status { color: var(--bl-text); }
+.bl-sat-revoke { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0 16px; border-radius: var(--bl-radius-lg);
+  font-weight: 600; background: var(--bl-accent); color: var(--bl-accent-contrast); border: 1px solid var(--bl-accent);
+  transition: background-color var(--bl-dur-fast) var(--bl-easing); }
+.bl-sat-revoke:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }
+.bl-sat-revoke:disabled { background: var(--bl-surface); color: var(--bl-text); border-color: var(--bl-border); cursor: default; }
+.bl-sat-msg { color: var(--bl-text); }
+@media (prefers-reduced-motion: reduce) { .bl-sat-revoke { transition: none; } }
+
+/* Esri-Links: Tippfläche ≥ 44 px ohne Layoutsprung (Padding, Gegen-Margin) */
+.bl-legal-tokens .bl-sat-link {
+  display: inline-block;
+  padding-block: 11px;
+  margin-block: -11px;
+  line-height: 22px;
+  color: var(--bl-text);
+  text-decoration-color: var(--bl-accent);
+  text-underline-offset: 3px;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+.bl-legal-tokens .bl-sat-link:focus-visible { outline: 2px solid var(--bl-accent); outline-offset: 2px; }

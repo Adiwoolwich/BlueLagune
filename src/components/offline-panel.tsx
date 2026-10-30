@@ -18,7 +18,7 @@ import {
 } from "../lib/offline-tiles";
 import { cn } from "../lib/utils";
 
-export function OfflineButton({ floating, openOnMount }: { floating?: boolean; openOnMount?: boolean }) {
+export function OfflineButton({ floating, openOnMount, label, className }: { floating?: boolean; openOnMount?: boolean; label?: string; className?: string }) {
   useLang();
   const [open, setOpen] = useState(Boolean(openOnMount));
   const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
@@ -39,13 +39,18 @@ export function OfflineButton({ floating, openOnMount }: { floating?: boolean; o
         onClick={() => setOpen(true)}
         data-bl-keep-clear
         title={!online ? t("offlineOffline") : t("offlineTitle")}
-        className={cn(
-          "relative inline-flex items-center justify-center bg-bg-elevated text-fg ring-1 ring-border",
-          floating ? "size-11 shrink-0 rounded-full shadow-panel" : "h-11 w-11 rounded-xl",
-        )}
+        className={
+          label
+            ? className
+            : cn(
+                "relative inline-flex items-center justify-center bg-bg-elevated text-fg ring-1 ring-border",
+                floating ? "size-11 shrink-0 rounded-full shadow-panel" : "h-11 w-11 rounded-xl",
+              )
+        }
         aria-label={t("offlineTitle")}
       >
         <Download className="size-5" />
+        {label ? <span>{label}</span> : null}
         {!online ? <span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-bad ring-2 ring-black" aria-hidden /> : null}
       </button>
       {open ? <OfflineSheet onClose={() => setOpen(false)} /> : null}
@@ -68,7 +73,7 @@ export function OfflineNotice() {
   }, []);
   if (online) return null;
   return (
-    <div role="status" className="pointer-events-auto absolute left-3 right-3 top-[5.25rem] z-30 mx-auto flex max-w-md items-center gap-2 rounded-xl bg-black/90 px-3 py-2 text-xs text-white ring-1 ring-white/20">
+    <div role="status" data-bl-offline-note className="pointer-events-auto absolute left-3 right-[68px] top-[5.75rem] z-30 mx-auto flex max-w-md lg:right-3 items-center gap-2 rounded-xl bg-chrome px-3 py-2 text-xs text-chrome-fg ring-1 ring-border shadow-[var(--shadow-btn)]">
       <WifiOff className="size-4 shrink-0 text-bad" aria-hidden />
       <span>{t("offlineOffline")}</span>
     </div>

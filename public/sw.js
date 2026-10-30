@@ -1,13 +1,13 @@
 /* Blue Lagune service worker: app shell + map tiles for offline use. */
-const APP = "bl-app-v2";
-const TILES = "bl-tiles-v4";
+const APP = "bl-app-v3";
+const TILES = "bl-tiles-v5";
 const TILE_HOSTS = [
-  "server.arcgisonline.com",
-  "services.arcgisonline.com",
-  "clarity.maptiles.arcgis.com",
   "tiles.openfreemap.org",
   "basemaps.cartocdn.com",
 ];
+
+// Lizenzpflicht (Esri ArcGIS Location Platform): Satellitenkacheln nie im Service Worker speichern.
+const NO_CACHE_HOSTS = ["arcgis.com", "arcgisonline.com", "tiles.maps.eox.at"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -35,7 +35,8 @@ self.addEventListener("fetch", (event) => {
   } catch {
     return;
   }
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/mock-sat/")) return;
+  if (NO_CACHE_HOSTS.some((h) => url.hostname === h || url.hostname.endsWith("." + h))) return;
 
   if (TILE_HOSTS.some((h) => url.hostname === h || url.hostname.endsWith("." + h))) {
     event.respondWith(tileResponse(req));

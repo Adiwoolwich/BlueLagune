@@ -18,27 +18,41 @@ export type Lang = "de" | "en" | "nl";
 
 const KEY = "bl-lang";
 
-function readSaved(): Lang | null {
-  try {
-    const v = localStorage.getItem(KEY);
-    if (v === "en" || v === "de" || v === "nl") return v;
-  } catch {
-    /* ignore */
-  }
-  return null;
+/** Aktive Sprachen: nur DE/EN (User 30.10. 12:42). NL-Texte bleiben im Code, werden aber nicht mehr gewählt. */
+export const ACTIVE_LANGS = ["de", "en"] as const;
+
+/** nl (gespeichert oder Browsersprache) → en; sonst en/de; Standard de. */
+export function pickLang(saved: string | null | undefined, nav: string | null | undefined): "de" | "en" {
+  const s = (saved ?? "").toLowerCase();
+  if (s === "de" || s === "en") return s;
+  if (s === "nl") return "en";
+  const n = (nav ?? "").toLowerCase();
+  if (n.startsWith("en") || n.startsWith("nl")) return "en";
+  return "de";
 }
 
 function detect(): Lang {
-  const saved = readSaved();
-  if (saved) return saved;
+  let saved: string | null = null;
+  let nav = "";
   try {
-    const nav = (navigator.language || "").toLowerCase();
-    if (nav.startsWith("nl")) return "nl";
-    if (nav.startsWith("en")) return "en";
+    saved = localStorage.getItem(KEY);
   } catch {
     /* ignore */
   }
-  return "de";
+  try {
+    nav = navigator.language || "";
+  } catch {
+    /* ignore */
+  }
+  const lang = pickLang(saved, nav);
+  if (saved === "nl") {
+    try {
+      localStorage.setItem(KEY, lang);
+    } catch {
+      /* ignore */
+    }
+  }
+  return lang;
 }
 
 let current: Lang = "de";
@@ -75,6 +89,7 @@ export function getLang(): Lang {
 
 export function setLang(next: Lang) {
   if (next !== "de" && next !== "en" && next !== "nl") return;
+  if (next === "nl") next = "en"; // NL nicht mehr wählbar
   current = next;
   try {
     localStorage.setItem(KEY, next);
@@ -86,7 +101,7 @@ export function setLang(next: Lang) {
 }
 
 export function toggleLang() {
-  setLang(current === "de" ? "en" : current === "en" ? "nl" : "de");
+  setLang(current === "de" ? "en" : "de");
 }
 
 export function useLang(): Lang {
@@ -137,7 +152,6 @@ const de = {
   sortVerified: "Zuletzt geprüft",
   shareMap: "Teilen",
   mapLayers: "Kartenebene",
-  mapClarity: "Klarheit",
   filterToggle: "Filter",
   alongRoute: "Entlang Route",
   countryDE: "Deutschland",
@@ -153,7 +167,7 @@ const de = {
   guide4t: "4. Nachspülen.",
   guide5t: "5. Status melden.",
   guide5: "Bei Defekt in der App markieren.",
-  placePh: "Ort, Stadt oder PLZ …",
+  placePh: "Ort/PLZ",
   cityPh: "Stadt, Ort oder PLZ (DE / NL) …",
   radius: "Umkreis",
   radiusPlace: "Ort",
@@ -353,15 +367,17 @@ const de = {
   privacyP1: "Verantwortlich im Sinne der DSGVO ist der im Impressum genannte Anbieter.",
   privacyWhich: "Welche Daten anfallen",
   privacyMap: "Karte:",
-  privacyMapP: "Satelliten- und Straßenkarten von Esri (World Imagery, World Transportation, native 256px, Retina) und Vektor-Ortsnamen von OpenFreeMap / OpenStreetMap (lokale DE-Namen). Dafür ist die IP-Adresse technisch nötig.",
+  privacyMapP: "Kartendaten © OpenStreetMap-Mitwirkende, Vektorkacheln von OpenFreeMap (OpenMapTiles), Satellitenbild EOxCloudless 2016 von EOX IT Services GmbH (CC BY 4.0, enthält modifizierte Copernicus-Sentinel-Daten). Beim Laden der Karte ruft dein Browser die Kacheln direkt bei diesen Anbietern ab; dabei wird deine IP-Adresse übertragen.",
+  privacySatP: "Satellitenvorschau und -karte (Esri ArcGIS): Nur wenn du einwilligst („Erlauben“) oder die Satellitenansicht einschaltest, lädt dein Browser Kartenkacheln direkt von Servern der Environmental Systems Research Institute, Inc. (Esri), 380 New York Street, Redlands, CA 92373, USA. Dabei werden deine IP-Adresse, Browser- und Geräteinformationen, der angefragte Kartenausschnitt, der Zeitpunkt sowie unser API-Schlüssel übertragen. Zweck: Anzeige der Satellitenbilder sowie Abrechnung und Missbrauchsschutz bei Esri. Rechtsgrundlage: deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG). Deine Wahl speichern wir nur im Local Storage deines Geräts; das ist dafür unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Die Kacheln werden nur im Cache deines Browsers zwischengespeichert, nicht auf unseren Servern. Auftragsverarbeitung: Mit Esri besteht ein Auftragsverarbeitungsvertrag (Esri Data Processing Addendum) nach Art. 28 DSGVO. Übermittlung in die USA: Grundlage sind die EU-Standardvertragsklauseln im Data Processing Addendum (Art. 46 Abs. 2 lit. c DSGVO). Speicherdauer: Esri speichert die Daten nach eigenen Angaben nur so lange, wie es für die genannten Zwecke nötig ist. Widerruf: Du kannst deine Einwilligung jederzeit mit Wirkung für die Zukunft unter „Datenschutz“ → „Satellitenvorschau“ widerrufen (Art. 7 Abs. 3 DSGVO); danach lädt die App nichts mehr von Esri. Mehr Infos: https://www.esri.com/en-us/privacy/privacy-statements/privacy-statement und https://trust.arcgis.com/en/compliance/gdpr.htm.",
   privacyLoc: "Standort:",
   privacyLocP: "nur im Browser nach Freigabe, nicht an uns gesendet.",
   privacyLs: "Local Storage:",
-  privacyLsP: "Filter und Merkliste auf deinem Gerät.",
+  privacyLsP: "Filter, Merkliste, deine zuletzt eingegebenen Suchbegriffe („Zuletzt gesucht“) und deine Wahl zur Satellitenvorschau auf deinem Gerät; das Speichern dieser Wahl ist unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Die Suchbegriffe bleiben nur auf deinem Gerät und werden nicht an uns übertragen. Du kannst sie jederzeit in der Suche löschen oder über die Browser-Einstellungen entfernen.",
+  privacyProP: "Tageszähler (Test „Pro Europa“): Wenn dir der Hinweis „Pro Europa“ angezeigt wird, du auf „Interesse zeigen“ tippst oder welche Variante (Europa/Frankreich) du siehst, erhöht unser Server (Cloudflare Workers) einen Zähler für den jeweiligen Tag. Wir speichern dabei keine IP-Adresse im Klartext und keine dauerhafte Kennung, setzen keine Cookies und lesen nichts aus deinem Gerätespeicher; deine IP-Adresse wird technisch bedingt nur kurz für die Übertragung verarbeitet. Nur zur Missbrauchsbegrenzung bilden wir einen kurzlebigen Tages-Hash deiner IP-Adresse (mit täglich wechselndem Zufallswert); er wird täglich um 00:00 UTC gelöscht. Es entstehen nur Summen pro Tag, die keinen Bezug zu dir haben. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (unser Interesse, herauszufinden, ob genug Nachfrage für Pro Europa besteht). Der Test endet am 27.11.2026.",
   privacyHost: "Hosting:",
   privacyHostP: "Cloudflare-Logs (IP, Zeitpunkt, Datei) zur Sicherheit.",
   privacyLaw: "Rechtsgrundlagen",
-  privacyLawP: "Art. 6 Abs. 1 lit. f DSGVO (Betrieb), lit. a bei Standortfreigabe.",
+  privacyLawP: "Art. 6 Abs. 1 lit. f DSGVO (Betrieb, Besucherzählung und Missbrauchsbremse), lit. a bei Standortfreigabe und Satellitenvorschau.",
   privacyRights: "Deine Rechte",
   privacyRightsP: "Auskunft, Löschung, Widerspruch. Kontakt:",
   privacyCookies: "Cookies",
@@ -369,7 +385,7 @@ const de = {
   privacyData: "Stationsdaten:",
   privacyDataP: "OpenStreetMap, Bordatlas, Betreiber und Community.",
   privacyGeo: "Ortssuche:",
-  privacyGeoP: "Nominatim (OpenStreetMap) für Ortsnamen — nicht für die Kartenkacheln.",
+  privacyGeoP: "Wenn du einen Ort oder eine PLZ eingibst oder die Karte verschiebst bzw. deinen Standort anzeigst, sendet dein Browser den eingegebenen Text bzw. die Koordinaten der Kartenmitte (nach Tippen auf „Standort“ also ungefähr deinen Standort) und deine IP-Adresse an Nominatim der OpenStreetMap Foundation (Vereinigtes Königreich, Angemessenheitsbeschluss). Zweck: Ortsnamen finden. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.",
   hoursUnknown: "unbekannt",
   feeUnknown: "unbekannt",
   reportNote: "Kurzer Hinweis (öffentlich)",
@@ -416,7 +432,6 @@ const en: Record<keyof typeof de, string> = {
   sortVerified: "Last checked",
   shareMap: "Share",
   mapLayers: "Map layer",
-  mapClarity: "Clarity",
   filterToggle: "Filters",
   alongRoute: "Along route",
   countryDE: "Germany",
@@ -432,7 +447,7 @@ const en: Record<keyof typeof de, string> = {
   guide4t: "4. Rinse afterwards.",
   guide5t: "5. Report status.",
   guide5: "Mark a fault in the app if it is broken.",
-  placePh: "Town, city or postcode …",
+  placePh: "City/ZIP",
   cityPh: "City, place or postcode (DE / NL) …",
   radius: "Radius",
   radiusPlace: "Place",
@@ -631,15 +646,17 @@ const en: Record<keyof typeof de, string> = {
   privacyP1: "The controller under the GDPR is the provider named in the imprint.",
   privacyWhich: "What data occurs",
   privacyMap: "Map:",
-  privacyMapP: "Satellite and road map tiles from Esri (World Imagery, World Transportation, native 256px, retina) and vector place names from OpenFreeMap / OpenStreetMap (local DE names). An IP address is technically required.",
+  privacyMapP: "Map data © OpenStreetMap contributors, vector tiles from OpenFreeMap (OpenMapTiles), satellite imagery EOxCloudless 2016 by EOX IT Services GmbH (CC BY 4.0, contains modified Copernicus Sentinel data). Your browser loads the tiles directly from these providers, which transmits your IP address.",
+  privacySatP: "Satellite preview and map (Esri ArcGIS): Only if you consent (\"Allow\") or switch on the satellite view does your browser load map tiles directly from servers of Environmental Systems Research Institute, Inc. (Esri), 380 New York Street, Redlands, CA 92373, USA. Your IP address, browser and device information, the requested map area, the time and our API key are transmitted. Purpose: displaying the satellite images, plus billing and abuse protection at Esri. Legal basis: your consent (Art. 6(1)(a) GDPR, § 25(1) TDDDG). We store your choice only in your device's local storage; this is strictly necessary for that purpose (§ 25(2) no. 2 TDDDG). Tiles are cached only in your browser's cache, not on our servers. Data processing agreement: An agreement (Esri Data Processing Addendum) under Art. 28 GDPR is in place with Esri. Transfer to the USA: based on the EU Standard Contractual Clauses in the Data Processing Addendum (Art. 46(2)(c) GDPR). Retention: According to Esri, data is kept only as long as necessary for these purposes. Withdrawal: You can withdraw your consent at any time with effect for the future under \"Privacy\" → \"Satellite preview\" (Art. 7(3) GDPR); the app then no longer loads anything from Esri. More information: https://www.esri.com/en-us/privacy/privacy-statements/privacy-statement and https://trust.arcgis.com/en/compliance/gdpr.htm.",
   privacyLoc: "Location:",
   privacyLocP: "only in the browser after you allow it, not sent to us.",
   privacyLs: "Local storage:",
-  privacyLsP: "filters and saved list on your device.",
+  privacyLsP: "filters, saved list, your recent search terms (\"Recent searches\") and your satellite preview choice on your device; storing this choice is strictly necessary (§ 25(2) no. 2 TDDDG). The search terms stay on your device only and are not sent to us. You can delete them at any time in the search or via your browser settings.",
+  privacyProP: "Daily counters (\"Pro Europa\" test): When the \"Pro Europa\" notice is shown to you, when you tap \"Show interest\", or depending on which variant (Europe/France) you see, our server (Cloudflare Workers) increases a counter for that day. We do not store your IP address in plain text or any permanent identifier, we do not set cookies, and we do not read anything from your device storage; for technical reasons your IP address is only processed briefly for the transmission. Only to limit abuse, we create a short-lived daily hash of your IP address (with a random value that changes daily); it is deleted every day at 00:00 UTC. Only daily totals are created, with no link to you. The legal basis is Art. 6(1)(f) GDPR (our interest in finding out whether there is enough demand for Pro Europa). The test ends on 27/11/2026.",
   privacyHost: "Hosting:",
   privacyHostP: "Cloudflare logs (IP, time, file) for security.",
   privacyLaw: "Legal bases",
-  privacyLawP: "Art. 6 (1)(f) GDPR (operation), (a) when you share location.",
+  privacyLawP: "Art. 6 (1)(f) GDPR (operation, visitor count and abuse protection), (a) when you share location and for the satellite preview.",
   privacyRights: "Your rights",
   privacyRightsP: "Access, erasure, objection. Contact:",
   privacyCookies: "Cookies",
@@ -647,7 +664,7 @@ const en: Record<keyof typeof de, string> = {
   privacyData: "Station data:",
   privacyDataP: "OpenStreetMap, Bordatlas, operators and the community.",
   privacyGeo: "Place search:",
-  privacyGeoP: "Nominatim (OpenStreetMap) for place names — not for map tiles.",
+  privacyGeoP: "When you enter a place or postcode, or move the map or show your location, your browser sends the text you entered or the coordinates of the map centre (after tapping “Location”, roughly your own location) and your IP address to Nominatim of the OpenStreetMap Foundation (United Kingdom, adequacy decision). Purpose: finding place names. Legal basis: Art. 6(1)(f) GDPR.",
   hoursUnknown: "unknown",
   feeUnknown: "unknown",
   reportNote: "Short public note",
@@ -657,279 +674,9 @@ const en: Record<keyof typeof de, string> = {
   sourceCredits: "Station data: OpenStreetMap, Bordatlas, operators, community.",
 };
 
-const nl: Record<keyof typeof de, string> = {
-  footerEmpty: "Legen",
-  footerImprint: "Colofon",
-  footerFeedback: "Feedback",
-  footerPrivacy: "Privacy",
-  langDe: "DE",
-  langEn: "EN",
-  langNl: "NL",
-  langToggle: "Taal wisselen",
-  landingKicker: "Losstations voor de camper",
-  landingH1: "Cassette legen – zonder zoekwerk.",
-  landingLead: "Vind betrouwbare stations in Duitsland en Nederland, navigeer ernaartoe en houd de kaart samen actueel.",
-  landingOfflineHint: "Sla kaartgebieden op voordat je vertrekt — stations en navigatie blijven zonder netwerk beschikbaar.",
-  landingOfflineCta: "Offlinekaarten openen",
-  landingTileFind: "Vinden & rijden",
-  landingTileFindSub: "Kaart, zoeken, GPX",
-  landingTileWater: "Water & cassette",
-  landingTileWaterSub: "V+E, filters",
-  landingTileSave: "Bewaren",
-  landingTileSaveSub: "Lijst & notities",
-  landingCount: "Momenteel {n}+ stations",
-  landingVisitors: "{n} bezoekers",
-  landingCta: "Naar de kaart",
-  landingNext: "De volgende keer meteen naar de kaart.",
-  landingOnce: "Alleen deze keer naar de kaart",
-  srTitle: "Blue Lagune – chemisch toilet en cassette legen in Duitsland en Nederland",
-  srLead: "Interactieve kaart met losstations voor chemische toiletten en cassettes in Duitsland en Nederland.",
-  sheetResize: "Lijst groter of kleiner",
-  nearbyStations: "Stations in de buurt",
-  sortBy: "Sorteren op",
-  sortDistance: "Afstand",
-  sortName: "Naam",
-  sortVerified: "Laatst gecontroleerd",
-  shareMap: "Delen",
-  mapLayers: "Kaartlaag",
-  mapClarity: "Helderheid",
-  filterToggle: "Filters",
-  alongRoute: "Langs de route",
-  countryDE: "Duitsland",
-  countryNL: "Nederland",
-  routeAir: "Geen wegroute beschikbaar – luchtlijn met corridor.",
-  guideTitle: "Cassette legen",
-  close: "Sluiten",
-  closeDe: "Sluiten",
-  guide1t: "1. Station vinden.",
-  guide1: "Plaats + straal of je locatie.",
-  guide2t: "2. Openingstijden controleren.",
-  guide3t: "3. Alleen de gemarkeerde put.",
-  guide4t: "4. Naspoelen.",
-  guide5t: "5. Status melden.",
-  guide5: "Markeer een defect in de app.",
-  placePh: "Plaats, stad of postcode …",
-  cityPh: "Stad, plaats of postcode (DE / NL) …",
-  radius: "Straal",
-  radiusPlace: "Plaats",
-  noCity: "Geen plaats gevonden. Voer een stad in DE/NL, een wijk of een postcode in.",
-  noCityHits: "Geen treffers in {n} plaatsen. Probeer een stad in DE/NL, een wijk of een postcode.",
-  didYouMean: "Bedoelde je …",
-  popular: "Populaire bestemmingen",
-  placesFooter: "{n} plaatsen · DE + NL · postcodezoeken",
-  clearPlace: "Plaats wissen",
-  showCities: "Steden tonen",
-  chipCassette: "Cassette",
-  chipGrey: "Grijs water",
-  chipGreyShort: "Grijs",
-  chipFresh: "Drinkwater",
-  chipFree: "Gratis",
-  chipPaid: "Betaald",
-  chipGuest: "Alleen gasten",
-  chipOpen: "Nu open",
-  chip24: "24u",
-  chipCamp: "Camping",
-  chipCc: "CamperClean",
-  chipHose: "Slang",
-  chipOk: "Bevestigd",
-  chipDe: "DE",
-  chipNl: "NL",
-  ariaCassette: "Cassettestations tonen",
-  ariaGrey: "Alleen met grijs water",
-  ariaFresh: "Alleen met drinkwater",
-  ariaFree: "Gratis",
-  ariaPaid: "Met tarief",
-  ariaGuest: "Alleen gasten / inbegrepen",
-  ariaOpen: "Nu geopend",
-  aria24: "Rond de klok",
-  ariaCamp: "Campings tonen",
-  ariaCc: "CamperClean tonen",
-  ariaHose: "Met slang",
-  ariaOk: "Door community bevestigd",
-  ariaDe: "Stations in Duitsland",
-  ariaNl: "Stations in Nederland",
-  reset: "Reset",
-  inView: "{n} in beeld",
-  route: "Route",
-  saved: "Bewaard",
-  addPlace: "Plek toevoegen",
-  stationsN: "{n} stations",
-  list: "Lijst",
-  backList: "← Lijst",
-  back: "← Terug",
-  emptyView: "Geen stations in dit kaartbeeld.",
-  emptyHint: "Zoom uit of zet de filters terug.",
-  emptyFilter: "Geen stations passen bij deze filters.",
-  emptyFilterHint: "Wis de filters of kies andere opties.",
-  savedEmpty: "Nog geen stations bewaard.",
-  recently: "Onlangs bekeken",
-  routeLead: "Stations langs de route, niet alleen hemelsbreed.",
-  from: "Van",
-  to: "Naar",
-  startPlace: "Startplaats",
-  endPlace: "Bestemming",
-  corridor: "Corridor",
-  routeNeedCities: "Kies start en bestemming uit de suggesties.",
-  routeBusy: "Route wordt berekend …",
-  routeApply: "Route toepassen",
-  routeClear: "Route wissen",
-  routeKmMin: "{km} km · ca. {min} min",
-  delete: "Verwijderen",
-  savedYes: "Bewaard",
-  save: "Bewaren",
-  share: "Delen",
-  linkCopied: "Link gekopieerd",
-  seasonalWarn: "Seizoensstation – in de winter vaak dicht. Check de tijden voor je vertrekt.",
-  reportStatus: "Status melden",
-  usedNow: "Net gebruikt",
-  geht: "Gaat",
-  broken: "Defect",
-  closed: "Gesloten",
-  dirty: "Vuil",
-  note: "Persoonlijke notitie",
-  notePh: "Toegang, munten, geur …",
-  locate: "Locatie",
-  typeCassette: "Cassette",
-  typeCombo: "Combi V+E",
-  typeCc: "CamperClean",
-  typeMunicipal: "Gemeentelijk",
-  typeGrey: "Alleen grijs water",
-  feeFree: "Gratis",
-  feePaid: "Tarief",
-  feeGuest: "Alleen gasten / inbegrepen",
-  hours24: "Rond de klok",
-  hoursDay: "Overdag",
-  hoursSeason: "Seizoensgebonden",
-  hoursLimited: "Beperkt",
-  certExact: "Tijden bevestigd",
-  certApprox: "Ongeveerde tijden",
-  certUnknown: "Tijden onzeker",
-  statusConfirmed: "Bevestigd",
-  statusStale: "Controle nodig",
-  statusBroken: "Defect",
-  statusClosed: "Gesloten",
-  statusUnknown: "Niet gecontroleerd",
-  hoursDaily24: "Dagelijks rond de klok",
-  hoursDaily: "Dagelijks {slot}",
-  hoursOpen: "Openingstijden",
-  today: "vandaag",
-  hoursCheck: "Check de tijden voor aankomst – ze kunnen seizoensafhankelijk zijn.",
-  allDay: "doorlopend",
-  shut: "gesloten",
-  dayMo: "ma",
-  dayTu: "di",
-  dayWe: "wo",
-  dayTh: "do",
-  dayFr: "vr",
-  daySa: "za",
-  daySu: "zo",
-  clusterN: "{n} stations",
-  navMissing: "Geen exacte positie – navigatie niet mogelijk.",
-  navOpenFail: "App niet geopend — kies opnieuw",
-  navStart: "Navigatie starten",
-  navChoose: "Kies een navigatie-app",
-  navOpenWith: "Navigatie openen met",
-  navPick: "Kies een app op je telefoon",
-  navCancel: "Annuleren",
-  navSystem: "Kies een geïnstalleerde navi-app",
-  navApple: "Apple Kaarten",
-  navGoogle: "Google Maps",
-  navWaze: "Waze",
-  navOther: "Andere geïnstalleerde app",
-  addTitle: "Plek toevoegen",
-  fieldName: "Naam *",
-  fieldCity: "Stad *",
-  fieldZip: "Postcode *",
-  fieldState: "Deelstaat / provincie",
-  fieldAddress: "Adres *",
-  fieldLat: "Latitude *",
-  fieldLng: "Longitude *",
-  useMyPos: "Mijn locatie gebruiken",
-  fieldType: "Type",
-  fieldFee: "Tarief",
-  fieldFeeNote: "Tarieftoelichting",
-  fieldHours: "Openingstijden",
-  fieldHoursNote: "Toelichting openingstijden",
-  fieldChem: "Chemie-regel",
-  fieldGear: "Voorzieningen",
-  fieldDesc: "Beschrijving",
-  light: "Verlichting",
-  covered: "Overdekt",
-  wheels: "Wielen",
-  saveStation: "Station opslaan",
-  saveLocal: "Alleen op dit apparaat opgeslagen (community-item).",
-  namePh: "bijv. camperplaats XY",
-  addrPh: "Straat en huisnummer",
-  feePh: "bijv. €2 munt",
-  hoursPh: "bijv. 8–20 uur, winter dicht",
-  descPh: "Toegang, tips, openingstijden …",
-  errGeoOff: "Geolocatie niet beschikbaar",
-  errGeoFail: "Locatie kon niet worden bepaald",
-  errRequired: "Naam, stad, postcode en adres zijn verplicht.",
-  errCoords: "Geldige coördinaten (lat/lng) vereist.",
-  errBounds: "Coördinaten liggen buiten DE/NL.",
-  chemNone: "Geen beperking",
-  chemGreen: "Alleen groene toevoegingen",
-  chemBan: "Chemie verboden",
-  communityEntry: "Community-item",
-  fbKicker: "Contact",
-  fbTitle: "Feedback",
-  fbLead: "Een kaarttip, een fout, een wens. We lezen mee.",
-  fbThanks: "Dank je. Je bericht is verstuurd.",
-  fbName: "Naam",
-  fbEmail: "E-mail",
-  fbCompany: "Bedrijf",
-  fbMsg: "Bericht",
-  fbSend: "Versturen",
-  fbSending: "Versturen…",
-  fbErrName: "Vul een naam in (2–80 tekens).",
-  fbErrMail: "Vul een geldig e-mailadres in.",
-  fbErrMsg: "Het bericht moet tussen 10 en 4000 tekens zijn.",
-  fbErr429: "Te veel berichten. Probeer het later opnieuw.",
-  fbErrSend: "Versturen is mislukt. Probeer het later opnieuw.",
-  backMap: "← Kaart",
-  legalKicker: "Juridisch",
-  imprintTitle: "Colofon",
-  imprintP1: "Gegevens volgens § 5 Duitse DDG.",
-  imprintProvider: "Dienstverlener",
-  imprintFallback: "Blue Lagune, bereikbaar via het e-mailadres hieronder. Naam en vestigingsadres van de exploitant worden hier aangevuld.",
-  imprintContact: "Contact",
-  imprintResponsible: "Verantwoordelijk voor de inhoud",
-  imprintResponsibleP: "Verantwoordelijk volgens § 18 lid 2 MStV: {name}.",
-  imprintOperator: "de exploitant, zie contact",
-  imprintLiability: "Aansprakelijkheid voor inhoud en links",
-  imprintLiabilityP: "De stations dienen ter oriëntatie. Openingstijden en voorzieningen kunnen wijzigen. Voor gelinkte websites zijn hun exploitanten verantwoordelijk.",
-  imprintOdr: "EU-geschillenbeslechting",
-  imprintOdrP: "Platform van de Europese Commissie: {url}. Wij nemen niet deel aan procedures bij een consumentengeschillencommissie.",
-  privacyTitle: "Privacy",
-  privacyP1: "Verwerkingsverantwoordelijke in de zin van de AVG is de in het colofon genoemde aanbieder.",
-  privacyWhich: "Welke gegevens ontstaan",
-  privacyMap: "Kaart:",
-  privacyMapP: "Satelliet- en wegenkaarten van Esri (World Imagery, World Transportation, native 256px, retina) en vectorplaatsnamen van OpenFreeMap / OpenStreetMap (lokale DE-namen). Daarvoor is het IP-adres technisch nodig.",
-  privacyLoc: "Locatie:",
-  privacyLocP: "alleen in de browser na toestemming, niet naar ons gestuurd.",
-  privacyLs: "Local Storage:",
-  privacyLsP: "filters en bewaarde lijst op je apparaat.",
-  privacyHost: "Hosting:",
-  privacyHostP: "Cloudflare-logs (IP, tijdstip, bestand) voor beveiliging.",
-  privacyLaw: "Rechtsgrondslagen",
-  privacyLawP: "Art. 6 lid 1 onder f AVG (exploitatie), onder a bij locatietoestemming.",
-  privacyRights: "Jouw rechten",
-  privacyRightsP: "Inzage, wissen, bezwaar. Contact:",
-  privacyCookies: "Cookies",
-  privacyCookiesP: "Geen tracking- of advertentiecookies.",
-  privacyData: "Stationsgegevens:",
-  privacyDataP: "OpenStreetMap, Bordatlas, exploitanten en de community.",
-  privacyGeo: "Plaatszoeken:",
-  privacyGeoP: "Nominatim (OpenStreetMap) voor plaatsnamen — niet voor de kaarttegels.",
-  hoursUnknown: "onbekend",
-  feeUnknown: "onbekend",
-  reportNote: "Korte publieke toelichting",
-  reportNotePh: "bijv. munt vast …",
-  reportErr: "Melding is niet gelukt. Probeer het later opnieuw.",
-  reportRate: "Te veel meldingen. Probeer het later opnieuw.",
-  sourceCredits: "Stationsgegevens: OpenStreetMap, Bordatlas, exploitanten, community.",
-};
+/** NL ohne eigene Rechtstexte (privacySatP/LsP/ProP/LawP): diese fallen bewusst auf EN zurück (Lex-Nachtrag 30.10.). */
+/* NL ist nicht mehr aktiv (nur DE/EN); nl fällt typsicher vollständig auf EN zurück. */
+const nl: Record<keyof typeof de, string> = { ...en };
 
 type Key = keyof typeof de | keyof typeof extraDe;
 
@@ -941,7 +688,9 @@ function dictFor(lang: Lang): Record<string, string> {
 
 export function t(key: Key, vars?: Record<string, string | number>): string {
   const table = dictFor(current);
-  let out: string = table[key] ?? extraDe[key as keyof typeof extraDe] ?? de[key as keyof typeof de];
+  // Plural: bei n = 1 die Variante "<key>_one" nehmen, falls vorhanden (DE/EN).
+  const one = vars && String(vars.n) === "1" ? table[`${key}_one`] : undefined;
+  let out: string = one ?? table[key] ?? extraDe[key as keyof typeof extraDe] ?? de[key as keyof typeof de];
   if (vars) {
     for (const [k, v] of Object.entries(vars)) out = out.replaceAll(`{${k}}`, String(v));
   }
@@ -1041,3 +790,10 @@ export function hoursLine(station: Station): string | null {
 }
 
 void HOURS_LABEL;
+export { de, en, nl };
+
+/** Pluralform wählen (Intl-Regeln, DE/EN: „one“ nur bei 1). */
+export function plural(n: number, one: string, other: string, lang: string = current): string {
+  const rule = new Intl.PluralRules(lang === "en" ? "en" : "de").select(n);
+  return (rule === "one" ? one : other).replaceAll("{n}", String(n));
+}

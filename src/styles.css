@@ -1,31 +1,69 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* Hell = Standard (ruhig, Tesla-nah); Dunkel automatisch über prefers-color-scheme. */
 @theme {
-  --color-bg: #000000;
-  --color-bg-elevated: #000000;
-  --color-surface: #1c1c1e;
-  --color-surface-2: #2c2c2e;
-  --color-fg: #ffffff;
-  --color-muted: #a1a1aa;
-  --color-subtle: #71717a;
-  --color-primary: #d4d4d8;
-  --color-primary-fg: #000000;
-  --color-lagoon: #e11d2e;
-  --color-border: #27272a;
-  --color-border-strong: #3f3f46;
-  --color-ok: #22c55e;
-  --color-stale: #f59e0b;
-  --color-bad: #e11d2e;
-  --color-auto: #3b82f6;
+  --color-bg: #efefef;
+  --color-bg-elevated: #efefef;
+  --color-surface: #f4f4f4;
+  --color-surface-2: #ebebeb;
+  --color-sheet: #ffffff;
+  --color-chrome: #ffffff;
+  --color-chrome-fg: #171a20;
+  --color-line: rgb(0 0 0 / 0.07);
+  --color-fg: #171a20;
+  --color-text: #393c41;
+  --color-muted: #5c5e62;
+  --color-subtle: #5c5e62;
+  --color-primary: #3e6ae1;
+  --color-primary-fg: #ffffff;
+  --color-lagoon: #3e6ae1;
+  --color-border: #eaeaea;
+  --color-border-strong: #c9cacc;
+  --color-ok: #15803d;
+  --color-stale: #a14a07;
+  --color-bad: #c81e1e;
+  --color-auto: #1f5fd1;
 
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --shadow-border: 0 0 0 1px #27272a;
-  --shadow-panel: 0 12px 40px rgb(0 0 0 / 0.55);
-  --shadow-btn: 0 2px 8px rgb(0 0 0 / 0.4);
-  --shadow-btn-hover: 0 4px 16px rgb(0 0 0 / 0.5);
+  --shadow-border: 0 0 0 1px #e2e3e3;
+  --shadow-panel: 0 8px 16px rgb(0 0 0 / 0.16);
+  --shadow-btn: 0 5px 10px rgb(0 0 0 / 0.075);
+  --shadow-sheet: 0 -8px 16px rgb(0 0 0 / 0.16);
+  --ease-panel: cubic-bezier(.5, 0, 0, .75);
+  --shadow-btn-hover: 0 3px 12px rgb(0 0 0 / 0.2);
+}
+:root { color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #262626;
+    --color-bg-elevated: #262626;
+    --color-surface: #222222;
+    --color-surface-2: #2e2e30;
+    --color-sheet: #171717;
+    --color-chrome: #171717;
+    --color-chrome-fg: #f4f4f5;
+    --color-line: #2c2c2e;
+    --color-fg: #f4f4f5;
+    --color-text: #d4d4d8;
+    --color-muted: #a8a8b0;
+    --color-subtle: #a1a1aa;
+    --color-primary: #2b66db;
+    --color-primary-fg: #ffffff;
+    --color-lagoon: #2b66db;
+    --color-border: #303033;
+    --color-border-strong: #44444a;
+    --color-ok: #34d368;
+    --color-stale: #f5a524;
+    --color-bad: #ff6b6b;
+    --color-auto: #6b9bff;
+    --shadow-border: 0 0 0 1px #303033;
+    --shadow-panel: 0 12px 40px rgb(0 0 0 / 0.55);
+    --shadow-btn: 0 2px 8px rgb(0 0 0 / 0.4);
+  }
 }
 
 @layer base {
@@ -57,11 +95,11 @@
   transition-property: none !important;
 }
 .bl-tap:hover {
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.38);
+  box-shadow: 0 0 0 1px var(--color-border-strong);
 }
 .bl-tap:active:not(:disabled),
 .bl-tap:has(:active) {
-  filter: invert(1);
+  filter: brightness(0.92);
 }
 .bl-tap[aria-busy="true"] {
   opacity: 0.7;
@@ -70,17 +108,17 @@
   transition: none !important;
 }
 .bl-tap-row:hover {
-  background-color: rgb(255 255 255 / 0.06);
+  background-color: color-mix(in srgb, var(--color-fg) 5%, transparent);
 }
 .bl-tap-row:active {
-  background-color: rgb(255 255 255 / 0.16);
+  background-color: color-mix(in srgb, var(--color-fg) 10%, transparent);
 }
 
 .leaflet-container {
   width: 100%;
   height: 100%;
   z-index: 0;
-  background: #0a0a0a;
+  background: var(--color-bg);
   font-family: var(--font-sans);
 }
 
@@ -93,12 +131,12 @@
 .leaflet-marker-shadow { display: none !important; }
 
 .leaflet-control-attribution {
-  background: rgb(0 0 0 / 0.72) !important;
-  color: #a1a1aa !important;
+  background: color-mix(in srgb, var(--color-chrome) 88%, transparent) !important;
+  color: var(--color-muted) !important;
   font-size: 10px !important;
-  border-radius: 4px 0 0 0;
+  border-radius: 6px 0 0 0;
 }
-.leaflet-control-attribution a { color: #ffffff !important; }
+.leaflet-control-attribution a { color: var(--color-fg) !important; }
 
 .leaflet-bl-labels-pane,
 .leaflet-bl-labels-pane canvas {
@@ -116,22 +154,21 @@
   overflow: hidden;
 }
 .leaflet-bar a {
-  background: #000000 !important;
-  color: #ffffff !important;
+  background: var(--color-chrome) !important;
+  color: var(--color-chrome-fg) !important;
   border: none !important;
   width: 40px !important;
   height: 40px !important;
   line-height: 40px !important;
   font-size: 16px !important;
 }
-.leaflet-bar a:hover { background: #1c1c1e !important; color: #ffffff !important; }
+.leaflet-bar a:hover { background: var(--color-surface-2) !important; color: var(--color-chrome-fg) !important; }
 .leaflet-bar a:last-child { border-bottom: none !important; }
 
 @media (max-width: 767px) {
   aside { font-size: 13px; }
   aside h2 { font-size: 1.25rem; line-height: 1.2; }
   input, select, textarea { font-size: 16px !important; }
-  .leaflet-control-attribution { display: none; }
   .leaflet-top.leaflet-right { top: 7.25rem; right: 12px; }
   .leaflet-control-zoom a {
     width: 40px !important;
@@ -167,9 +204,9 @@
 }
 
 .leaflet-tooltip.bl-map-tooltip {
-  background: #000000;
-  color: #ffffff;
-  border: 1px solid #27272a;
+  background: var(--color-chrome);
+  color: var(--color-chrome-fg);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.4rem 0.65rem;
   box-shadow: 0 8px 22px rgb(0 0 0 / 0.45);
@@ -180,9 +217,9 @@
   max-width: 16rem;
   pointer-events: none;
 }
-.leaflet-tooltip.bl-map-tooltip::before { border-top-color: #000000; }
-.bl-map-tooltip-name { display: block; font-weight: 600; color: #ffffff; }
-.bl-map-tooltip-place { display: block; margin-top: 0.1rem; font-size: 0.75rem; font-weight: 400; color: #a1a1aa; }
+.leaflet-tooltip.bl-map-tooltip::before { border-top-color: var(--color-chrome); }
+.bl-map-tooltip-name { display: block; font-weight: 600; color: var(--color-chrome-fg); }
+.bl-map-tooltip-place { display: block; margin-top: 0.1rem; font-size: 0.75rem; font-weight: 400; color: var(--color-muted); }
 
 .bl-chips {
   display: flex;
@@ -201,11 +238,11 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #3f3f46 transparent;
+  scrollbar-color: var(--color-border-strong) transparent;
 }
 .bl-scroll::-webkit-scrollbar { width: 8px; }
 .bl-scroll::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: var(--color-border-strong);
   border-radius: 99px;
 }
 
@@ -216,10 +253,10 @@
   gap: 8px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: #1c1c1e;
+  background: var(--color-surface-2);
   font-size: 12px;
   line-height: 1.4;
-  color: #a1a1aa;
+  color: var(--color-muted);
 }
 
 .bl-drop {
@@ -422,3 +459,83 @@
 }
 
 .bl-list-row { content-visibility: auto; contain-intrinsic-size: 72px; }
+
+/* Tesla-Stil-Marker: runder Pin mit Icon, weißer Ring; Trefferfläche 44 px. */
+.bl-pin {
+  display: grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 999px;
+  background: var(--pin);
+  box-shadow: 0 0 0 2px #ffffff, 0 1px 4px rgb(0 0 0 / 0.35);
+}
+.bl-sel { display: block; line-height: 0; filter: drop-shadow(0 3px 5px rgb(0 0 0 / 0.3)); }
+.bl-sel svg { display: block; }
+.bl-cl {
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: var(--color-chrome); color: var(--color-chrome-fg);
+  font: 500 13px/1 var(--font-sans); font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px #3e6ae1, 0 2px 6px rgb(0 0 0 / 0.25);
+}
+.bl-cl-s { width: 30px; height: 30px; }
+.bl-cl-m { width: 36px; height: 36px; }
+.bl-cl-l { width: 42px; height: 42px; font-size: 12px; }
+@media (prefers-color-scheme: dark) {
+  .bl-pin { box-shadow: 0 0 0 2px #171717, 0 0 10px color-mix(in srgb, var(--pin) 55%, transparent); }
+  .bl-cl { box-shadow: 0 0 0 2px #6b8ff0, 0 2px 8px rgb(0 0 0 / 0.5); }
+}
+
+/* Desktop ≥ 1024 px: schwebendes Seitenpanel links unter der Suche (Tesla-Web). */
+@media (min-width: 1024px) {
+  aside.bl-sheet {
+    left: 24px !important; right: auto !important; top: 86px !important; bottom: auto !important;
+    width: 400px; height: auto !important; max-height: calc(100dvh - 100px);
+    transform: none !important; border-radius: 10px !important;
+    width: 393px;
+    box-shadow: var(--shadow-panel);
+  }
+  aside.bl-sheet .bl-sheet-handle { display: none; }
+  .bl-topbar { justify-content: flex-start !important; padding-left: 16px !important; padding-top: 16px !important; }
+  .bl-topbar { padding-left: 24px !important; padding-top: 24px !important; }
+  .bl-topbar .bl-search { margin-left: 0 !important; flex: 0 0 393px !important; max-width: 393px !important; }
+}
+
+/* Ruhige Typo: nur 400/500 in der Karten-Oberfläche. */
+[data-chrome="map"] .font-semibold, [data-chrome="map"] .font-bold, [data-chrome="map"] h2, [data-chrome="map"] h3 { font-weight: 500; }
+[data-chrome="map"] { font-feature-settings: "cv11", "ss01"; }
+/* Mobil: Glas-Sheet (Weiß 80 % + Blur 15 px), Radius 10 oben. */
+aside.bl-sheet {
+  background: color-mix(in srgb, var(--color-sheet) 92%, transparent);
+  -webkit-backdrop-filter: blur(15px); backdrop-filter: blur(15px);
+  border-radius: 10px 10px 0 0;
+  box-shadow: var(--shadow-sheet);
+}
+.bl-search .bl-tap { height: 50px; border-radius: 6px; }
+.bl-search input { height: 48px; }
+.bl-pin.bl-sel, .bl-marker .bl-pin.bl-sel { width: auto; height: auto; background: none; box-shadow: none; border-radius: 0; }
+
+/* Pflicht-Attribution (OSM, OpenFreeMap, EOX) immer sichtbar. Unter 1024 px oben links unter der Suche,
+   damit das Bottom-Sheet sie nie verdeckt; kompakt, ohne Klick lesbar. */
+@media (max-width: 1023px) {
+  .leaflet-bottom.leaflet-right {
+    top: calc(max(0.7rem, env(safe-area-inset-top)) + 54px); bottom: auto; left: 12px; right: 68px;
+  }
+  .leaflet-bottom.leaflet-right { display: flex; align-items: flex-start; gap: 4px; }
+  .leaflet-bottom.leaflet-right .leaflet-control-attribution {
+    float: none; flex: 0 1 auto; min-width: 0; margin: 0 !important; border-radius: 6px !important;
+    font-size: 10px !important; line-height: 1.35; padding: 2px 6px !important;
+    /* einzeilig; Quelle („Powered by Esri“ / EOX / OpenFreeMap) steht vorn, ⓘ klappt alles auf */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  .leaflet-bottom.leaflet-right.bl-attr-open .leaflet-control-attribution { white-space: normal; overflow: visible; }
+  .leaflet-bottom.leaflet-right .bl-attr-toggle { display: inline-flex; }
+}
+.bl-attr-toggle {
+  display: none; position: relative; float: none !important; margin: 0 !important; flex: none; order: 2;
+  width: 18px; height: 18px; align-items: center; justify-content: center; border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-chrome) 88%, transparent); color: var(--color-fg);
+  font-size: 12px; line-height: 1; border: 0; cursor: pointer; pointer-events: auto;
+}
+/* Tippfläche ≥ 44 px ohne größere Optik */
+.bl-attr-toggle::before { content: ""; position: absolute; inset: -13px -13px -13px 0; }
+@media (max-width: 1023px) {
+}

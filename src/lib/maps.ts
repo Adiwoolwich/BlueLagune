@@ -125,11 +125,12 @@ export function launchNav(href: string) {
 }
 
 /** Precise coords preferred. Address-only if the street can be resolved. Never invents city-centroid coords. */
-export function navTargetsForPlace(place: {
 /** Navigation targets require finite coordinates inside the DE/NL product area. */
+export function navTargetsForPlace(place: {
+  lat?: number;
   lng?: number;
   name?: string;
 }): NavTarget[] {
   if (!isSensibleNavCoords(place.lat, place.lng)) return [];
-  return navTargets(place.lat, place.lng, place.name);
+  return navTargets(place.lat, place.lng as number, place.name);
 }

@@ -24,6 +24,8 @@ import { copyShareUrl, shareUrl } from "../lib/url-state";
 import { postReport } from "../lib/reports";
 import { feeLabel, hoursLine, t, typeLabel, useLang } from "../lib/i18n";
 import { cn } from "../lib/utils";
+import { useSatConsent, withSatConsent } from "../lib/sat-preview";
+import { SatConsentPrompt, SatPreview, SatPreviewAttribution } from "./sat-preview";
 
 function Chip({
   active,
@@ -44,7 +46,7 @@ function Chip({
       aria-label={label}
       title={label}
       className={cn(
-        "bl-tap inline-flex h-11 min-h-11 shrink-0 items-center rounded-full px-2.5 text-[13px] font-medium",
+        "bl-tap bl-chip inline-flex h-11 min-h-11 shrink-0 items-center rounded-full px-2.5 text-[13px] font-medium",
         active ? "bg-primary text-primary-fg" : "bg-surface text-fg ring-1 ring-border hover:ring-border-strong",
       )}
     >
@@ -67,7 +69,7 @@ export function StationPanel({ stations }: { stations: Station[] }) {
   return <div className="flex h-full min-h-0 flex-1 flex-col">{body}</div>;
 }
 
-export function SearchBar({ overlay }: { overlay?: boolean }) {
+export function SearchBar({ overlay, noRadius }: { overlay?: boolean; noRadius?: boolean }) {
   useLang();
   const query = useAppStore((s) => s.query);
   const setQuery = useAppStore((s) => s.setQuery);
@@ -132,10 +134,10 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
           compactMenu={overlay}
         />
       </div>
-      <label
+      {noRadius ? null : <label
         className={
           overlay
-            ? "relative block w-[4.2rem] shrink-0 self-center"
+            ? "relative block w-[6rem] shrink-0 self-center"
             : "relative block w-[4.6rem] shrink-0 self-end"
         }
       >
@@ -146,7 +148,7 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
           onChange={(e) => setFilters({ radiusKm: Number(e.target.value) })}
           className={
             overlay
-              ? "h-11 w-full appearance-none rounded-[10px] bg-black/80 py-0 pr-6 pl-2 text-[13px] text-white ring-1 ring-white/15 outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+              ? "h-11 w-full appearance-none rounded-[10px] bg-chrome py-0 pr-6 pl-2.5 text-[13px] tabular-nums text-chrome-fg ring-1 ring-border shadow-[var(--shadow-btn)] outline-none focus:ring-2 focus:ring-primary/50 disabled:text-muted"
               : "h-11 w-full appearance-none rounded-full bg-surface py-0 pr-6 pl-2 text-sm text-fg ring-1 ring-border outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
           }
           aria-label={t("radius")}
@@ -160,11 +162,11 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
         <span
           className={
             overlay
-              ? "pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 border-x-4 border-t-[5px] border-x-transparent border-t-white/70"
+              ? "pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 border-x-4 border-t-[5px] border-x-transparent border-t-muted"
               : "pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 border-x-4 border-t-[5px] border-x-transparent border-t-muted"
           }
         />
-      </label>
+      </label>}
     </div>
   );
 }
@@ -319,7 +321,7 @@ export function SearchAndFilters({
           type="button"
           onClick={() => setFiltersOpen(!filtersOpen)}
           className={cn(
-            "bl-tap inline-flex size-11 shrink-0 items-center justify-center rounded-lg ring-1 ring-white/15",
+            "bl-tap inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-fg ring-1 ring-border",
             filtersOpen ? "bg-surface-2" : "bg-transparent",
           )}
           aria-label={t("filterToggle")}
@@ -331,7 +333,7 @@ export function SearchAndFilters({
           <select
             value={listSort}
             onChange={(e) => setListSort(e.target.value as "distance" | "name" | "verified" | "along")}
-            className="bl-tap h-11 appearance-none rounded-lg bg-transparent py-0 pr-6 pl-2.5 text-[13px] text-fg ring-1 ring-white/15"
+            className="bl-tap h-11 appearance-none rounded-lg bg-transparent py-0 pr-6 pl-2.5 text-[13px] text-fg ring-1 ring-border"
           >
             <option value="distance">{t("sortBy")}</option>
             <option value="name">{t("sortName")}</option>
@@ -375,6 +377,11 @@ function StationList({ stations }: { stations: Station[] }) {
   const routePath = useAppStore((s) => s.routePath);
   const reports = useAppStore((s) => s.reports);
   const serverReports = useAppStore((s) => s.serverReports);
+  // Konzept 1, Desktop-Liste (≥ 1024 px): Satellitenvorschau je Zeile – nur mit Einwilligung (bl-sat-preview = yes),
+  // sonst gar kein Vorschau-Element (also auch kein Esri-Request).
+  const satAllowed = useSatConsent().allowed;
+  const k1Desktop = useK1Desktop();
+  const satThumb = satAllowed && k1Desktop;
   const origin = userPos ?? (bounds ? centerOfBounds(bounds) : null);
   const visible = useMemo(() => {
     const inView = bounds
@@ -402,47 +409,57 @@ function StationList({ stations }: { stations: Station[] }) {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <ul className="bl-scroll divide-y divide-white/10">
+      <ul className="bl-scroll bl-list divide-y divide-line">
         {visible.map((s) => {
           const km = origin && hasPreciseCoords(s) ? haversineKm(origin, s) : null;
           const fav = favorites.includes(s.id);
-          const pin = STATUS_COLOR[deriveStatus(s, serverToLocal(s.id, serverReports[s.id], reports[s.id]))] ?? "#e11d2e";
+          const pin = STATUS_COLOR[deriveStatus(s, serverToLocal(s.id, serverReports[s.id], reports[s.id]))] ?? STATUS_COLOR.unknown;
           return (
-            <li key={s.id} className="bl-list-row">
+            <li key={s.id} className="bl-list-row" style={{ "--pin": pin } as React.CSSProperties}>
               <button
                 type="button"
                 onClick={() => select(s.id)}
                 className={cn(
                   "bl-tap-row flex min-h-[72px] w-full items-center gap-3 py-3 text-left",
-                  selectedId === s.id ? "bg-white/5" : "",
+                  selectedId === s.id ? "bg-surface" : "",
                 )}
               >
+                {satThumb ? (
+                  <span className="bl-list-sat w-[88px] shrink-0" data-bl-list-sat>
+                    <SatPreview lat={s.lat} lng={s.lng} height={64} credit />
+                  </span>
+                ) : null}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[16px] font-semibold leading-tight text-fg">
                       {s.city}, {stationCountry(s) === "nl" ? t("countryNL") : t("countryDE")}
                     </span>
-                    {fav ? <Star className="size-3.5 shrink-0 fill-white text-white" /> : null}
+                    {fav ? <Star className="size-3.5 shrink-0 fill-fg text-fg" /> : null}
                   </div>
                   <p className="mt-0.5 truncate text-[13px] leading-snug text-muted">{s.address || s.name}</p>
-                  <p className="truncate text-[12px] leading-snug text-muted">
+                  <p className="bl-row-badges" aria-hidden>
+                    {s.hours === "24h" ? <span className="bl-badge bl-badge-warm">24h</span> : null}
+                    {s.fee ? <span className="bl-badge">{feeLabel(s.fee)}</span> : null}
+                    <span className="bl-badge">{typeLabel(s.type)}</span>
+                  </p>
+                  <p className="bl-row-meta truncate text-[12px] leading-snug text-muted">
                     {[s.fee ? feeLabel(s.fee) : null, typeLabel(s.type), s.hours === "24h" ? "24h" : null]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
                 </div>
                 <div className="flex w-[4.75rem] shrink-0 flex-col items-center justify-center gap-1">
-                  <svg viewBox="0 0 24 32" width="36" height="40" aria-hidden>
-                    <path fill={pin} stroke="#ffffff" strokeWidth="1.5" strokeLinejoin="round" d="M12 1.5C12 1.5 3.5 12.2 3.5 19.2a8.5 8.5 0 0 0 17 0C20.5 12.2 12 1.5 12 1.5z" />
-                    <circle cx="12" cy="19.2" r="3.2" fill="#ffffff" />
-                  </svg>
-                  {km != null ? <span className="text-[15px] font-semibold tabular-nums leading-none text-fg">{formatKm(km)}</span> : null}
+                  <span className="bl-row-pin grid size-9 place-items-center rounded-full" style={{ background: pin }} aria-hidden>
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#ffffff" d="M12 2.5S5.5 10.4 5.5 15a6.5 6.5 0 0 0 13 0C18.5 10.4 12 2.5 12 2.5z" /></svg>
+                  </span>
+                  {km != null ? <span className="bl-row-km text-[15px] font-semibold tabular-nums leading-none text-fg">{formatKm(km)}</span> : null}
                 </div>
               </button>
             </li>
           );
         })}
       </ul>
+      {satThumb ? <SatPreviewAttribution /> : null}
     </div>
   );
 }
@@ -902,7 +919,7 @@ export function LocateButton({ iconOnly, floating }: { iconOnly?: boolean; float
       }}
       data-bl-keep-clear
       className={cn(
-        "bl-tap inline-flex items-center justify-center bg-black/80 text-white ring-1 ring-white/15",
+        "bl-tap inline-flex items-center justify-center bg-chrome text-chrome-fg shadow-[var(--shadow-btn)] ring-1 ring-border",
         floating ? "size-11 shrink-0 rounded-full" : "h-11 shrink-0 rounded-full",
         iconOnly || floating ? "w-11" : "px-3",
       )}
@@ -921,7 +938,7 @@ export function LocateButton({ iconOnly, floating }: { iconOnly?: boolean; float
       {iconOnly || floating ? null : <span className="ml-1.5 text-sm">{t("locate")}</span>}
     </button>
       {geoMsg ? (
-        <span role="status" className="absolute top-full right-0 z-50 mt-2 w-max max-w-[15rem] rounded-lg bg-black/90 px-3 py-2 text-xs text-white shadow-lg">
+        <span role="status" className="absolute top-full right-0 z-50 mt-2 w-max max-w-[15rem] rounded-lg bg-chrome px-3 py-2 text-xs text-chrome-fg ring-1 ring-border shadow-lg">
           {geoMsg}
         </span>
       ) : null}
@@ -929,7 +946,7 @@ export function LocateButton({ iconOnly, floating }: { iconOnly?: boolean; float
   );
 }
 
-const fabCls = "bl-tap inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-black/80 text-white ring-1 ring-white/15";
+const fabCls = "bl-tap inline-flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-chrome text-chrome-fg shadow-[var(--shadow-btn)] ring-1 ring-border";
 
 export function ShareFab() {
   useLang();
@@ -957,58 +974,38 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
   useLang();
   const mapLabels = useAppStore((s) => s.mapLabels);
   const setMapLabels = useAppStore((s) => s.setMapLabels);
-  const satClarity = useAppStore((s) => s.satClarity);
-  const setSatClarity = useAppStore((s) => s.setSatClarity);
+  const mapStyle = useAppStore((s) => s.mapStyle);
+  const setMapStyle = useAppStore((s) => s.setMapStyle);
   const sheet = useAppStore((s) => s.sheet);
   const setSheet = useAppStore((s) => s.setSheet);
-  const hold = useRef(0);
-  const held = useRef(false);
-  const clarityToastTimer = useRef<number | null>(null);
-  const [clarityToast, setClarityToast] = useState(false);
-
-  useEffect(() => () => {
-    if (clarityToastTimer.current != null) window.clearTimeout(clarityToastTimer.current);
-  }, []);
-
-  function showClarityToast() {
-    if (clarityToastTimer.current != null) window.clearTimeout(clarityToastTimer.current);
-    setClarityToast(true);
-    clarityToastTimer.current = window.setTimeout(() => setClarityToast(false), 1400);
-  }
+  const satOk = useSatConsent().allowed;
+  const satOn = mapStyle === "sat" && satOk;
   return (
     <div className="relative flex flex-col gap-3">
+      <SatConsentPrompt onlyWhenAsked className="absolute right-14 top-0 z-[1200] w-72" />
       <LocateButton floating />
       <button
         type="button"
-        className={cn(fabCls, "bg-white text-black ring-white/0")}
-        aria-label={satClarity ? t("mapClarity") : t("mapLayers")}
-        title={`${t("mapLayers")} · ${t("mapClarity")}`}
-        aria-pressed={mapLabels}
-        onPointerDown={() => {
-          held.current = false;
-          window.clearTimeout(hold.current);
-          hold.current = window.setTimeout(() => {
-            held.current = true;
-            setSatClarity(!satClarity);
-            showClarityToast();
-          }, 480);
-        }}
-        onPointerUp={() => window.clearTimeout(hold.current)}
-        onPointerCancel={() => window.clearTimeout(hold.current)}
-        onPointerLeave={() => window.clearTimeout(hold.current)}
+        className={cn(fabCls, satOn && "bg-primary text-primary-fg ring-primary")}
+        aria-label={t("mapLayers")}
+        title={t("mapLayers")}
+        aria-pressed={satOn}
+        data-bl-maptype
         onClick={() => {
-          if (held.current) {
-            held.current = false;
-            return;
-          }
-          setMapLabels(!mapLabels);
+          // Globus: Karte ↔ Satellit (Standard Karte); Satellit nur nach Einwilligung.
+          if (satOn) setMapStyle("map");
+          else
+            withSatConsent(() => {
+              setMapStyle("sat");
+              if (!useAppStore.getState().mapLabels) setMapLabels(true);
+            });
         }}
       >
         <Globe className="size-5" />
       </button>
       <button
         type="button"
-        className={cn(fabCls, sheet !== "peek" && "bg-white text-black ring-white/0")}
+        className={cn(fabCls, sheet !== "peek" && "bg-primary text-primary-fg ring-primary")}
         aria-label={t("nearbyStations")}
         aria-pressed={sheet !== "peek"}
         onClick={() => setSheet(sheet === "peek" ? "mid" : "peek")}
@@ -1016,14 +1013,24 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
         <List className="size-5" />
       </button>
       <OfflineButton floating openOnMount={offlineOpen} />
-      {clarityToast ? (
-        <span
-          role="status"
-          className="pointer-events-none absolute top-14 right-14 whitespace-nowrap rounded-lg bg-black/90 px-2.5 py-1.5 text-xs text-white shadow-lg"
-        >
-          {t("mapClarity")}
-        </span>
-      ) : null}
     </div>
   );
+}
+
+/** Konzept 1 (?konzept=1) im Desktop-Layout (≥ 1024 px). */
+function useK1Desktop(): boolean {
+  const q = "(min-width: 1024px)";
+  const get = () => typeof window !== "undefined" && document.documentElement.dataset.k === "1" && window.matchMedia(q).matches;
+  const [on, setOn] = useState(get);
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const f = () => setOn(get());
+    f();
+    m.addEventListener("change", f);
+    // data-k setzt die Shell erst in ihrem Effekt (nach unserem) → Attribut beobachten.
+    const mo = new MutationObserver(f);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-k"] });
+    return () => (m.removeEventListener("change", f), mo.disconnect());
+  }, []);
+  return on;
 }

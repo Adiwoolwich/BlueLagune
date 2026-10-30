@@ -95,8 +95,12 @@ type AppState = {
   panel: "list" | "detail" | "saved" | "route" | "add";
   extraStations: Station[];
   sheet: "peek" | "mid" | "full";
+  /** Gerüst (?design=*): im Karussell fokussierte Station (Fly-to, ohne Detail zu öffnen). */
+  focusId: string | null;
+  setFocus: (id: string | null) => void;
   mapLabels: boolean;
-  satClarity: boolean;
+  mapStyle: "map" | "sat";
+  setMapStyle: (v: "map" | "sat") => void;
   listSort: "distance" | "name" | "verified" | "along";
   filtersOpen: boolean;
   serverReports: Record<string, ServerReport>;
@@ -118,7 +122,6 @@ type AppState = {
   setPanel: (p: AppState["panel"]) => void;
   setSheet: (s: AppState["sheet"]) => void;
   setMapLabels: (on: boolean) => void;
-  setSatClarity: (on: boolean) => void;
   setListSort: (s: AppState["listSort"]) => void;
   setFiltersOpen: (on: boolean) => void;
   setExtraStations: (list: Station[]) => void;
@@ -150,8 +153,10 @@ export const useAppStore = create<AppState>()(
       panel: "list",
       extraStations: [],
       sheet: "mid",
+      focusId: null,
+      setFocus: (focusId) => set({ focusId }),
       mapLabels: true,
-      satClarity: false,
+      mapStyle: "map",
       listSort: "distance",
       filtersOpen: false,
       serverReports: {},
@@ -195,7 +200,7 @@ export const useAppStore = create<AppState>()(
         }),
       setSheet: (sheet) => set({ sheet }),
       setMapLabels: (mapLabels) => set({ mapLabels }),
-      setSatClarity: (satClarity) => set({ satClarity }),
+      setMapStyle: (mapStyle) => set({ mapStyle }),
       setListSort: (listSort) => set({ listSort }),
       setFiltersOpen: (filtersOpen) => set({ filtersOpen }),
       setExtraStations: (extraStations) => set({ extraStations }),
@@ -228,6 +233,7 @@ export const useAppStore = create<AppState>()(
         reports: s.reports,
         notes: s.notes,
         extraStations: s.extraStations,
+        mapStyle: s.mapStyle,
       }),
     },
   ),
