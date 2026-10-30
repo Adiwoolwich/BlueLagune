@@ -69,7 +69,6 @@ export function SatPreview({ lat, lng, className, height = 112, credit }: { lat:
       {live && credit ? <span className="bl-sat-credit" data-bl-sat-credit>© Esri</span> : null}
       {live ? (
         <span className="bl-sat-attr">
-          {SAT_PREVIEW_MOCK ? <b className="bl-sat-mock">Mock · </b> : null}
           {SAT_PREVIEW_POWERED} | {sources}
         </span>
       ) : null}
@@ -86,7 +85,6 @@ export function SatPreviewAttribution({ className }: { className?: string }) {
   if (!SAT_PREVIEW || !consent.allowed) return null;
   return (
     <p className={cn("bl-sat-attr-line", className)} data-bl-list-sat-attr>
-      {SAT_PREVIEW_MOCK ? <b className="bl-sat-mock">Mock · </b> : null}
       {t("satImagery")} Powered by{" "}
       <a href="https://www.esri.com" target="_blank" rel="noopener" className="bl-sat-attr-link" data-bl-esri-link>Esri</a>
       {" | "}{sources}
