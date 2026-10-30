@@ -5,7 +5,7 @@ import { LocateButton, SearchBar, StationPanel } from "../station-panel";
 import { OfflineButton, OfflineNotice } from "../offline-panel";
 import { SatConsentPrompt } from "../sat-preview";
 import { allStations, useAppStore, type Filters } from "../../lib/store";
-import { haversineKm, inBounds } from "../../lib/geo";
+import { formatKm, haversineKm, inBounds } from "../../lib/geo";
 import { hasPreciseCoords, type Station } from "../../lib/stations";
 import { copyShareUrl, shareUrl } from "../../lib/url-state";
 import { setLang, t, useLang, type Lang } from "../../lib/i18n";
@@ -31,6 +31,8 @@ const K: Record<string, L3> = {
   searchPh: { de: "Ort, PLZ oder Station", en: "Place, postcode or station" },
   filter: { de: "Filter", en: "Filters" },
   recent: { de: "Zuletzt gesucht", en: "Recent searches" },
+  clearRecent: { de: "Verlauf löschen", en: "Clear history" },
+  nearTiles: { de: "In der Nähe", en: "Nearby" },
   near: { de: "In meiner Nähe", en: "Near me" },
   nearest: { de: "Route zur nächsten Station", en: "Route to nearest station" },
   radius: { de: "Umkreis", en: "Radius" },
@@ -92,16 +94,30 @@ function activeFilterCount(f: Filters): number {
 }
 
 /* Zuletzt gesucht: nur im Speicher dieser Sitzung (Verbesserung). */
+/** Zuletzt gesucht – wie Konzept 2 (miniHard): gleicher Schlüssel bl-recent-q, max. 5, nur auf dem Gerät, löschbar. */
+export const RECENT_KEY = "bl-recent-q";
+function readRecent(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 5) : [];
+  } catch {
+    return [];
+  }
+}
 function useRecent() {
-  const query = useAppStore((s) => s.query);
-  const [recent, setRecent] = useState<string[]>([]);
-  useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) return;
-    const id = window.setTimeout(() => setRecent((r) => [q, ...r.filter((x) => x !== q)].slice(0, 5)), 900);
-    return () => window.clearTimeout(id);
-  }, [query]);
-  return recent;
+  const [recent, setRecent] = useState<string[]>(() => readRecent());
+  function remember(q: string) {
+    const v = q.trim();
+    if (v.length < 2) return;
+    const next = [v, ...readRecent().filter((x) => x !== v)].slice(0, 5);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* privat/voll */ }
+    setRecent(next);
+  }
+  function clear() {
+    try { localStorage.removeItem(RECENT_KEY); } catch { /* egal */ }
+    setRecent([]);
+  }
+  return { recent, remember, clear };
 }
 
 /* ---------- Oben: große Suche ---------- */
@@ -124,7 +140,7 @@ function BigSearch({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-function SearchSheet({ stations, inView, recent, onClose }: { stations: Station[]; inView: number; recent: string[]; onClose: () => void }) {
+function SearchSheet({ stations, inView, recent, onClose: done }: { stations: Station[]; inView: number; recent: ReturnType<typeof useRecent>; onClose: () => void }) {
   const lang = useLang();
   const filters = useAppStore((s) => s.filters);
   const setFilters = useAppStore((s) => s.setFilters);
@@ -150,6 +166,15 @@ function SearchSheet({ stations, inView, recent, onClose }: { stations: Station[
     return best;
   }, [stations, origin]);
   const placeOk = Boolean(filters.place || origin);
+  const near = useMemo(() => {
+    const ref = origin ?? null;
+    if (!ref) return [] as Station[];
+    return stations.filter(hasPreciseCoords).map((s) => [s, haversineKm(ref, s)] as const).sort((a, b) => a[1] - b[1]).slice(0, 4).map(([s]) => s);
+  }, [stations, origin]);
+  const onClose = () => {
+    recent.remember(useAppStore.getState().query);
+    done();
+  };
   return (
     <section className="k1-sheet k1-sheet-search" role="dialog" aria-modal="true" aria-label={k("filter", lang)} data-k1-search>
       <div className="k1-sheet-head">
@@ -162,9 +187,9 @@ function SearchSheet({ stations, inView, recent, onClose }: { stations: Station[
       </div>
       <div className="k1-sheet-body">
         <div className="k1-quick">
-          <div className="k1-quick-btn">
+          <div className="k1-quick-btn k1-quick-locate" data-k1-near>
             <LocateButton />
-            <span>{k("near", lang)}</span>
+            <span className="k1-quick-label">{k("near", lang)}</span>
           </div>
           <button
             type="button"
@@ -181,13 +206,29 @@ function SearchSheet({ stations, inView, recent, onClose }: { stations: Station[
             <span>{k("nearest", lang)}</span>
           </button>
         </div>
-        {recent.length ? (
-          <div className="k1-group">
-            <p className="k1-group-title">{k("recent", lang)}</p>
+        {recent.recent.length ? (
+          <div className="k1-group" data-k1-recent>
+            <p className="k1-group-title k1-group-title-row">
+              <span>{k("recent", lang)}</span>
+              <button type="button" className="k1-link" onClick={recent.clear}>{k("clearRecent", lang)}</button>
+            </p>
             <div className="k1-recent">
-              {recent.map((r) => (
-                <button key={r} type="button" className="k1-row" onClick={() => setQuery(r)}>
-                  <Clock className="size-4" /> {r}
+              {recent.recent.map((r) => (
+                <button key={r} type="button" className="k1-chip" onClick={() => setQuery(r)}>
+                  <Clock className="size-4" aria-hidden /> {r}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {near.length ? (
+          <div className="k1-group" data-k1-neartiles>
+            <p className="k1-group-title">{k("nearTiles", lang)}</p>
+            <div className="k1-tiles">
+              {near.map((s) => (
+                <button key={s.id} type="button" className="k1-tile k1-tile-2" onClick={() => { setFocus(s.id); select(s.id); onClose(); }}>
+                  <span>{s.city}</span>
+                  <span className="k1-tile-sub">{origin ? formatKm(haversineKm(origin, s)) : ""}</span>
                 </button>
               ))}
             </div>

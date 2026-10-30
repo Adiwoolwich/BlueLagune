@@ -50,3 +50,23 @@ test("390: Tab-Bar unten, alle Tabs ≥ 44 px", async ({ page }) => {
   expect(tb.y).toBeGreaterThan(700);
   for (const b of await page.locator("[data-k1-tab]").all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 });
+
+test("Suche 390: „In meiner Nähe“ ohne Überlappung, Tippziel ≥ 44 px; zuletzt gesucht bleibt (bl-recent-q) und ist löschbar", async ({ page }) => {
+  await page.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { localStorage.setItem("bl-recent-q", JSON.stringify(["Köln", "Venlo"])); sessionStorage.setItem("seeded", "1"); } });
+  await open(page, 390);
+  await page.locator("[data-k1-open-search]").click();
+  const near = page.locator("[data-k1-near]");
+  const nb = (await near.boundingBox())!;
+  const btn = (await near.locator("button").boundingBox())!;
+  const lbl = (await near.locator(".k1-quick-label").boundingBox())!;
+  expect(btn.height).toBeGreaterThanOrEqual(44);
+  expect(btn.width).toBeGreaterThanOrEqual(44);
+  expect(nb.height).toBeGreaterThanOrEqual(44);
+  const overlap = !(lbl.x + lbl.width <= btn.x || btn.x + btn.width <= lbl.x || lbl.y + lbl.height <= btn.y || btn.y + btn.height <= lbl.y);
+  expect(overlap).toBe(false);
+  expect(btn.x + btn.width).toBeLessThanOrEqual(nb.x + nb.width + 0.5);
+  await expect(page.locator("[data-k1-recent] .k1-chip")).toHaveText(["Köln", "Venlo"]);
+  await page.locator("[data-k1-recent] .k1-link").click();
+  await expect(page.locator("[data-k1-recent]")).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem("bl-recent-q"))).toBeNull();
+});

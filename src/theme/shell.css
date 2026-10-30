@@ -352,3 +352,19 @@
   :root[data-k="1"] .k1-ask { left: calc(var(--k1-panel-w) + 16px); right: auto; width: 380px; bottom: calc(var(--bl-attr-h) + 16px); }
   :root[data-k="1"] .leaflet-top.leaflet-left { left: 0; }
 }
+
+/* ===== Konzept 1 P2: Suche – zuletzt gesucht, In der Nähe, entzerrte Schnellkacheln ===== */
+:root[data-k="1"] .k1-quick { grid-template-columns: 1fr; }
+:root[data-k="1"] .k1-quick-btn { min-height: 56px; padding: 6px 12px; gap: 12px; font-size: 14px; }
+:root[data-k="1"] .k1-quick-locate { justify-content: space-between; }
+:root[data-k="1"] .k1-quick-locate .k1-quick-label { order: -1; flex: 1; min-width: 0; }
+:root[data-k="1"] .k1-quick-locate button { min-height: 44px; min-width: 44px; flex: 0 0 auto; }
+@media (min-width: 480px) { :root[data-k="1"] .k1-quick { grid-template-columns: 1fr 1fr; } }
+:root[data-k="1"] .k1-group-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+:root[data-k="1"] .k1-link { min-height: 44px; padding: 0 4px; font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--bl-accent); }
+:root[data-k="1"] .k1-recent { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+:root[data-k="1"] .k1-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 600;
+  background: var(--bl-chip-bg); border: 1px solid var(--bl-border); color: var(--bl-text); }
+:root[data-k="1"] .k1-tile-2 { display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+:root[data-k="1"] .k1-tile-sub { font-size: 12px; font-weight: 500; color: var(--bl-text-muted); }
+:root[data-k="1"] :is(.k1-chip, .k1-link):focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }
