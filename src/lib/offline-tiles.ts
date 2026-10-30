@@ -1,7 +1,7 @@
 import type { MapBounds } from "./geo";
 import type { MapView } from "./store";
 
-export const TILE_CACHE = "bl-tiles-v4";
+export const TILE_CACHE = "bl-tiles-v5"; // muss zu public/sw.js passen
 export const OFFLINE_META_KEY = "bl-offline-meta";
 const MAX_TILES = 2400;
 const Z_MIN = 7;
@@ -33,14 +33,6 @@ function lat2y(lat: number, z: number) {
   return y;
 }
 
-export function imageryUrl(z: number, x: number, y: number) {
-  return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
-}
-
-export function roadsUrl(z: number, x: number, y: number) {
-  return `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/${z}/${y}/${x}`;
-}
-
 /** The stable wildcard path is also used by SAT_LABEL_STYLE. */
 export function labelsUrl(z: number, x: number, y: number) {
   return `https://tiles.openfreemap.org/planet/bluelagune/${z}/${x}/${y}.pbf`;
@@ -67,8 +59,13 @@ export function boundsFromRadius(lat: number, lng: number, km: number): MapBound
   };
 }
 
+/** Schriften für die Kartenbeschriftung (Latin + Latin-1/Ext.), damit offline Namen erscheinen. */
+export const GLYPH_URLS = ["Noto Sans Regular", "Noto Sans Bold", "Noto Sans Italic"].flatMap((f) =>
+  ["0-255", "256-511"].map((r) => `https://tiles.openfreemap.org/fonts/${encodeURIComponent(f)}/${r}.pbf`),
+);
+
 function urlsForBounds(bounds: MapBounds, zMin: number, zMax: number, cap: number): string[] {
-  const urls: string[] = [];
+  const urls: string[] = [...GLYPH_URLS];
   for (let z = zMin; z <= zMax; z++) {
     const x0 = lon2x(bounds.west, z);
     const x1 = lon2x(bounds.east, z);
@@ -76,8 +73,7 @@ function urlsForBounds(bounds: MapBounds, zMin: number, zMax: number, cap: numbe
     const y1 = lat2y(bounds.south, z);
     for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) {
       for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
-        urls.push(imageryUrl(z, x, y), roadsUrl(z, x, y));
-        // OpenFreeMap serves labels through z14; MapLibre overscales that level above it.
+        // Offline nur OpenFreeMap-Vektorkacheln (bis z14, darüber skaliert MapLibre hoch).
         if (z <= 14) urls.push(labelsUrl(z, x, y));
         if (urls.length >= cap) return urls;
       }

@@ -135,7 +135,7 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
       <label
         className={
           overlay
-            ? "relative block w-[4.2rem] shrink-0 self-center"
+            ? "relative block w-[6rem] shrink-0 self-center"
             : "relative block w-[4.6rem] shrink-0 self-end"
         }
       >
@@ -146,7 +146,7 @@ export function SearchBar({ overlay }: { overlay?: boolean }) {
           onChange={(e) => setFilters({ radiusKm: Number(e.target.value) })}
           className={
             overlay
-              ? "h-11 w-full appearance-none rounded-[10px] bg-chrome py-0 pr-6 pl-2 text-[13px] text-chrome-fg ring-1 ring-border shadow-[var(--shadow-btn)] outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+              ? "h-11 w-full appearance-none rounded-[10px] bg-chrome py-0 pr-6 pl-2.5 text-[13px] tabular-nums text-chrome-fg ring-1 ring-border shadow-[var(--shadow-btn)] outline-none focus:ring-2 focus:ring-primary/50 disabled:text-muted"
               : "h-11 w-full appearance-none rounded-full bg-surface py-0 pr-6 pl-2 text-sm text-fg ring-1 ring-border outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
           }
           aria-label={t("radius")}

@@ -2,11 +2,7 @@
 const APP = "bl-app-v3";
 const TILES = "bl-tiles-v5";
 const TILE_HOSTS = [
-  "server.arcgisonline.com",
-  "services.arcgisonline.com",
-  "clarity.maptiles.arcgis.com",
   "tiles.openfreemap.org",
-  "tiles.maps.eox.at",
   "basemaps.cartocdn.com",
 ];
 

@@ -18,7 +18,7 @@ const WATER = "#e8f1ff";
 const HALO_W = 2;
 
 /**
- * Labels-only MapLibre style over Esri satellite.
+ * Labels-only MapLibre style over the EOX satellite layer.
  * OpenFreeMap / OpenMapTiles, no API key. Transparent background.
  * Tesla-near: bright ink, thick dark halo, POI + water visible on sat at z15–17.
  */

@@ -413,12 +413,10 @@ function VectorLabels() {
   return null;
 }
 
-const ESRI_WORLD = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 // EOxCloudless 2016 (CC BY 4.0, ohne Key/Konto; Attribution Pflicht). Quelle: tiles.maps.eox.at WMTS.
 const EOX_S2_2016 = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg";
 const EOX_ATTR =
   'Satellit: <a href="https://cloudless.eox.at" target="_blank" rel="noopener">EOxCloudless</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> · Namen <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
-const ESRI_CLARITY = "https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 /** Gestochen scharfe Vektor-Basiskarte (MapLibre GL, WebGL, rendert mit devicePixelRatio). */
 function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
   const map = useMap();
@@ -496,17 +494,14 @@ export function StationMap({
   initialView?: MapView;
 }) {
   const userPos = useAppStore((s) => s.userPos);
-  const satClarity = useAppStore((s) => s.satClarity);
   const mapStyle = useAppStore((s) => s.mapStyle);
   const dark = useDarkScheme();
   const online = useOnline();
-  // Offline gespeicherte Kacheln sind Satellit → offline bleibt Satellit sichtbar.
   const [glOk, setGlOk] = useState(() => hasWebGL());
   const onGlFail = useMemo(() => () => setGlOk(false), []);
-  // Offline: bisher gespeicherte Esri-Kacheln (unverändertes Altverhalten).
-  const legacySat = !online;
   // Satellit auf Wunsch oder als Fallback ohne WebGL (EOX Sentinel-2 cloudless 2016, CC BY 4.0).
-  const sat = mapStyle === "sat" || !glOk;
+  // Offline nur die gespeicherte Vektorkarte (OpenFreeMap); Satellit gibt es offline nicht.
+  const sat = online && (mapStyle === "sat" || !glOk);
   const [heading, setHeading] = useState<number | null>(null);
   useEffect(() => {
     const onOri = (e: DeviceOrientationEvent) => {
@@ -544,26 +539,7 @@ export function StationMap({
       minZoom={1}
       maxZoom={22}
     >
-      {legacySat ? (
-        <>
-          <TileLayer
-            key="sat"
-            attribution='Satellit &copy; <a href="https://www.esri.com/">Esri</a>, Maxar · Straßen &copy; Esri · Namen &copy; <a href="https://openfreemap.org/">OpenFreeMap</a> / OSM'
-            url={satClarity ? ESRI_CLARITY : ESRI_WORLD}
-            maxZoom={22}
-            maxNativeZoom={19}
-            detectRetina
-          />
-          <TileLayer
-            key="sat-roads"
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"
-            maxZoom={22}
-            maxNativeZoom={19}
-            detectRetina
-            opacity={0.88}
-          />
-        </>
-      ) : sat ? (
+      {sat ? (
         <TileLayer key="eox" attribution={EOX_ATTR} url={EOX_S2_2016} maxZoom={22} maxNativeZoom={15} detectRetina className="bl-sat" />
       ) : (
         <VectorBase dark={dark} onFail={onGlFail} />
