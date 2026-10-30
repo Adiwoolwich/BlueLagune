@@ -49,13 +49,18 @@ describe("Satellit: eine Konfigurationsstelle, Esri mit Key, EOX als Rückfall",
   it("station-map enthält keine fest verdrahtete Satelliten-URL", () => {
     expect(readFileSync("src/components/station-map.tsx", "utf8")).not.toMatch(/tiles\.maps\.eox\.at|arcgis/);
   });
-  it("Datenschutz-Baustein Satellit in DE/EN/NL", () => {
-    expect(de.privacySatP).toContain("Wenn du die Satellitenansicht aktivierst");
+  it("Datenschutz-Baustein Satellit: Lex' Du-Fassung, ohne DPF-Satz, mit SCC – DE/EN/NL", () => {
+    expect(de.privacySatP).toContain("Wenn du die Satellitenansicht einschaltest, lädt dein Browser Kartenkacheln direkt von Servern der Environmental Systems Research Institute, Inc. (Esri), 380 New York Street, Redlands, CA 92373, USA.");
+    expect(de.privacySatP).toContain("Esri Data Processing Addendum");
+    expect(de.privacySatP).toContain("Am einfachsten lässt du die Satellitenansicht ausgeschaltet.");
     expect(de.privacySatP).not.toMatch(/\b(Sie|Ihr|Ihre|Ihren|Ihrem)\b/);
     expect(nl.privacySatP).not.toMatch(/\b(u|uw)\b/);
-    expect(de.privacySatP).toContain("laut Anbieter");
-    expect(de.privacySatP).toContain("Environmental Systems Research Institute, Inc., Redlands, USA");
-    expect(en.privacySatP).toContain("satellite view");
-    expect(nl.privacySatP).toContain("satellietweergave");
+    for (const l of [de, en, nl]) {
+      expect(l.privacySatP).not.toMatch(/Data Privacy Framework|DPF|Art\. 45/);
+      expect(l.privacySatP).toMatch(/Art\. 46/);
+      expect(l.privacySatP).toMatch(/Standardvertragsklauseln|Standard Contractual Clauses|standaardcontractbepalingen/);
+      expect(l.privacySatP).not.toContain("[");
+    }
   });
+
 });
