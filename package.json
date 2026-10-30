@@ -5,7 +5,9 @@
   "description": "Blue Lagune – Chemietoiletten-Entsorgungsstationen für Wohnmobile in Deutschland und den Niederlanden",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/check-build-env.mjs",
     "build": "vite build",
+    "build:test": "BL_ALLOW_MOCK_BUILD=1 npm run build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
