@@ -4,7 +4,7 @@ import { openMap } from "./helpers";
 // Läuft gegen einen Build mit Platzhalter-Key (BL_ESRI_PORT); Esri-Netz wird gemockt, kein echter Key.
 const port = process.env.BL_ESRI_PORT;
 test.skip(!port, "nur mit BL_ESRI_PORT (Build mit ESRI_API_KEY-Platzhalter)");
-test.use({ baseURL: `http://127.0.0.1:${port}`, serviceWorkers: "block" });
+test.use({ baseURL: `http://localhost:${port}`, serviceWorkers: "block" });
 
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 

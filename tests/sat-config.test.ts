@@ -38,9 +38,11 @@ describe("Satellit: eine Konfigurationsstelle, Esri mit Key, EOX als Rückfall",
   });
   it("Esri nur in der Konfigurationsstelle, nicht in Service Worker oder Offline-Download", () => {
     const hits = execSync("grep -rliE 'arcgis' src public || true", { encoding: "utf8" }).trim().split("\n").filter(Boolean);
-    expect(hits).toEqual(["src/lib/sat-source.ts"]);
+    expect(hits.sort()).toEqual(["public/sw.js", "src/lib/sat-source.ts"]);
     const sw = readFileSync("public/sw.js", "utf8");
-    expect(sw).toMatch(/NO_CACHE_HOSTS[^\n]*arcgis/);
+    // im SW nur als Ausschluss: NO_CACHE_HOSTS, nie in TILE_HOSTS
+    expect(sw.split("\n").filter((l) => /arcgis/.test(l)).every((l) => /NO_CACHE_HOSTS/.test(l))).toBe(true);
+    expect(sw).toMatch(/NO_CACHE_HOSTS\.some\([^\n]*\) return;/);
     const { urls } = planDownload({ west: 6.9, east: 7.0, south: 50.9, north: 50.95 }, 12);
     expect(urls.some((u) => /arcgis|esri|eox/i.test(u))).toBe(false);
   });

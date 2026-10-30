@@ -47,7 +47,8 @@ test("Platzhalter im Suchfeld bei 320 px voll sichtbar", async ({ page }) => {
     const cs = getComputedStyle(el);
     const ctx = document.createElement("canvas").getContext("2d")!;
     ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    return { ph: el.placeholder, need: ctx.measureText(el.placeholder).width, avail: el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) };
+    const all = [el.placeholder, "Ort/PLZ", "City/ZIP", "Plaats/PC"];
+    return { ph: el.placeholder, need: Math.max(...all.map((p) => ctx.measureText(p).width)), avail: el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) };
   });
   expect(r.ph.length).toBeGreaterThan(0);
   expect(r.need, `Platzhalter "${r.ph}" abgeschnitten`).toBeLessThanOrEqual(r.avail);

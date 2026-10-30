@@ -75,7 +75,7 @@ export function DatenschutzPage() {
       <h2>{t("privacyWhich")}</h2>
       <ul className="list-disc space-y-1 pl-5">
         <li>
-          <strong className="text-fg">{t("privacyMap")}</strong> {t("privacyMapP")}
+          <strong className="text-fg">{t("privacyMap")}</strong> {t("privacyMapP")} {t("privacySatP")}
         </li>
         <li>
           <strong className="text-fg">{t("privacyLoc")}</strong> {t("privacyLocP")}

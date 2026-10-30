@@ -32,3 +32,4 @@ node_modules
 dist
 test-results
 pids.txt
+dist-esri

@@ -435,7 +435,6 @@ function MapApp() {
             <SearchBar overlay />
           </div>
           <OfflineNotice />
-          <span className="size-11 shrink-0 lg:hidden" aria-hidden />
         </div>
         <div data-bl-rail className="pointer-events-auto absolute right-3 top-[max(4.5rem,9dvh)] z-30 lg:right-4 lg:top-4">
           <MapRoundButtons offlineOpen={openOffline} />

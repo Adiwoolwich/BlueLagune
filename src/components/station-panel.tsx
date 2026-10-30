@@ -956,54 +956,22 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
   useLang();
   const mapLabels = useAppStore((s) => s.mapLabels);
   const setMapLabels = useAppStore((s) => s.setMapLabels);
-  const satClarity = useAppStore((s) => s.satClarity);
-  const setSatClarity = useAppStore((s) => s.setSatClarity);
   const mapStyle = useAppStore((s) => s.mapStyle);
   const setMapStyle = useAppStore((s) => s.setMapStyle);
   const sheet = useAppStore((s) => s.sheet);
   const setSheet = useAppStore((s) => s.setSheet);
-  const hold = useRef(0);
-  const held = useRef(false);
-  const clarityToastTimer = useRef<number | null>(null);
-  const [clarityToast, setClarityToast] = useState(false);
-
-  useEffect(() => () => {
-    if (clarityToastTimer.current != null) window.clearTimeout(clarityToastTimer.current);
-  }, []);
-
-  function showClarityToast() {
-    if (clarityToastTimer.current != null) window.clearTimeout(clarityToastTimer.current);
-    setClarityToast(true);
-    clarityToastTimer.current = window.setTimeout(() => setClarityToast(false), 1400);
-  }
   return (
     <div className="relative flex flex-col gap-3">
       <LocateButton floating />
       <button
         type="button"
         className={cn(fabCls, mapStyle === "sat" && "bg-primary text-primary-fg ring-primary")}
-        aria-label={satClarity ? t("mapClarity") : t("mapLayers")}
-        title={`${t("mapLayers")} · ${t("mapClarity")}`}
+        aria-label={t("mapLayers")}
+        title={t("mapLayers")}
         aria-pressed={mapStyle === "sat"}
         data-bl-maptype
-        onPointerDown={() => {
-          held.current = false;
-          window.clearTimeout(hold.current);
-          hold.current = window.setTimeout(() => {
-            held.current = true;
-            setSatClarity(!satClarity);
-            showClarityToast();
-          }, 480);
-        }}
-        onPointerUp={() => window.clearTimeout(hold.current)}
-        onPointerCancel={() => window.clearTimeout(hold.current)}
-        onPointerLeave={() => window.clearTimeout(hold.current)}
         onClick={() => {
-          if (held.current) {
-            held.current = false;
-            return;
-          }
-          // Globus: Karte ↔ Satellit (Standard Karte). Lang drücken: Satellit-Schärfe.
+          // Globus: Karte ↔ Satellit (Standard Karte).
           if (mapStyle === "sat") setMapStyle("map");
           else {
             setMapStyle("sat");
@@ -1023,14 +991,6 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
         <List className="size-5" />
       </button>
       <OfflineButton floating openOnMount={offlineOpen} />
-      {clarityToast ? (
-        <span
-          role="status"
-          className="pointer-events-none absolute top-14 right-14 whitespace-nowrap rounded-lg bg-chrome px-2.5 py-1.5 text-xs text-chrome-fg ring-1 ring-border shadow-lg"
-        >
-          {t("mapClarity")}
-        </span>
-      ) : null}
     </div>
   );
 }

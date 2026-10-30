@@ -14,6 +14,7 @@ import "leaflet/dist/leaflet.css";
 
 import { SAT_LABEL_STYLE } from "@/lib/map-label-style";
 import { BASE_ATTRIBUTION, baseStyle, hasWebGL } from "@/lib/map-base-style";
+import { SAT_FALLBACK, satSource, satTileUrl } from "@/lib/sat-source";
 import {
   deriveStatus,
   findCity,
@@ -413,10 +414,6 @@ function VectorLabels() {
   return null;
 }
 
-// EOxCloudless 2016 (CC BY 4.0, ohne Key/Konto; Attribution Pflicht). Quelle: tiles.maps.eox.at WMTS.
-const EOX_S2_2016 = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg";
-const EOX_ATTR =
-  'Satellit: <a href="https://cloudless.eox.at" target="_blank" rel="noopener">EOxCloudless</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> · Namen <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 /** Gestochen scharfe Vektor-Basiskarte (MapLibre GL, WebGL, rendert mit devicePixelRatio). */
 function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
   const map = useMap();
@@ -501,7 +498,11 @@ export function StationMap({
   const onGlFail = useMemo(() => () => setGlOk(false), []);
   // Satellit auf Wunsch oder als Fallback ohne WebGL (EOX Sentinel-2 cloudless 2016, CC BY 4.0).
   // Offline nur die gespeicherte Vektorkarte (OpenFreeMap); Satellit gibt es offline nicht.
-  const sat = online && (mapStyle === "sat" || !glOk);
+  const userSat = online && mapStyle === "sat";
+  const sat = userSat || (online && !glOk);
+  // Gewählte Quelle (Esri mit Key, sonst EOX) nur bei Nutzerwahl; Rückfall ohne WebGL immer EOX.
+  const satSrc = userSat ? satSource() : SAT_FALLBACK;
+  const satUrl = satTileUrl(satSrc) ?? satTileUrl(SAT_FALLBACK)!;
   const [heading, setHeading] = useState<number | null>(null);
   useEffect(() => {
     const onOri = (e: DeviceOrientationEvent) => {
@@ -540,7 +541,17 @@ export function StationMap({
       maxZoom={22}
     >
       {sat ? (
-        <TileLayer key="eox" attribution={EOX_ATTR} url={EOX_S2_2016} maxZoom={22} maxNativeZoom={15} detectRetina className="bl-sat" />
+        <TileLayer
+          key={satSrc.id}
+          attribution={satSrc.attribution}
+          url={satUrl}
+          maxZoom={22}
+          maxNativeZoom={satSrc.maxNativeZoom}
+          tileSize={satSrc.tileSize ?? 256}
+          zoomOffset={satSrc.zoomOffset ?? 0}
+          detectRetina={!satSrc.tileSize}
+          className="bl-sat"
+        />
       ) : (
         <VectorBase dark={dark} onFail={onGlFail} />
       )}

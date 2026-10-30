@@ -6,6 +6,9 @@ const TILE_HOSTS = [
   "basemaps.cartocdn.com",
 ];
 
+// Lizenzpflicht (Esri ArcGIS Location Platform): Satellitenkacheln nie im Service Worker speichern.
+const NO_CACHE_HOSTS = ["arcgis.com", "arcgisonline.com", "tiles.maps.eox.at"];
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(APP).then((cache) => cache.addAll(["/", "/index.html", "/favicon.svg"]).catch(() => undefined)),
@@ -33,6 +36,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   if (url.pathname.startsWith("/api/")) return;
+  if (NO_CACHE_HOSTS.some((h) => url.hostname === h || url.hostname.endsWith("." + h))) return;
 
   if (TILE_HOSTS.some((h) => url.hostname === h || url.hostname.endsWith("." + h))) {
     event.respondWith(tileResponse(req));
