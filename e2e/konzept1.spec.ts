@@ -64,9 +64,11 @@ test("Konzept 1: Satellit-Ebene läuft über dieselbe Einwilligung; Sprache nur 
   await expect(page.locator('[data-k1-more] [aria-label="Sprache"] button')).toHaveText(["DE", "EN"]);
 });
 
-test("Ohne ?konzept bleibt das Gerüst, ohne ?design die alte Oberfläche", async ({ page }) => {
+test("Ohne Parameter K1, ?alt=1 alte Oberfläche, ?design ohne ?konzept das Gerüst", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("bl-skip-landing", "1"));
-  await openMap(page, { width: 390, path: "/?lat=50.94&lng=6.96&z=11" });
+  await openMap(page, { width: 390, path: "/?lat=50.94&lng=6.96&z=11", raw: true });
+  await expect(page.locator("[data-k1-tabbar]")).toBeVisible();
+  await openMap(page, { width: 390, path: "/?lat=50.94&lng=6.96&z=11&alt=1" });
   await expect(page.locator("[data-k1-tabbar]")).toHaveCount(0);
   await expect(page.locator(".bl-g-pill")).toHaveCount(0);
   await openMap(page, { width: 390, path: "/?lat=50.94&lng=6.96&z=11&design=teal" });
