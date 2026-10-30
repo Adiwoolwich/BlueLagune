@@ -55,3 +55,17 @@ describe("K1 Pro (miniHard, minihard/k1-pro)", () => {
     expect(execSync("grep -rli 'sentry' src worker worker.ts || true", { encoding: "utf8" }).trim()).toBe("");
   });
 });
+
+describe("Datenschutz Satellitenvorschau: Farben nur var(--bl-*)", () => {
+  it("Widerruf-Knopf und Statuszeile ohne Tailwind-Farbklassen, Tokens auf Rechtsseiten verfügbar", () => {
+    const l = read("src/components/legal-pages.tsx");
+    const sec = l.slice(l.indexOf("function SatPreviewPrivacy"), l.indexOf("export function DatenschutzPage"));
+    expect(sec).not.toMatch(/bg-primary|text-primary-fg|text-fg|bg-surface|ring-border/);
+    expect(sec).toMatch(/bl-legal-tokens/);
+    const css = read("src/theme/legal-sat.css");
+    expect(css).toMatch(/\.bl-sat-revoke[^}]*var\(--bl-accent\)/);
+    expect(css).toMatch(/min-height: 44px/);
+    expect(css.replace(/var\(--bl-[a-z-]+\)/g, "")).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(|oklch\(/i);
+    expect(execSync("git diff --stat 831222f -- src/theme/shell.css", { encoding: "utf8" }).trim()).toBe("");
+  });
+});
