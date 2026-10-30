@@ -126,3 +126,15 @@ async function signTestJwt(aud: string, iss: string) {
   const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", kp.privateKey, new TextEncoder().encode(data));
   return { token: `${data}.${b64(sig)}`, jwks: { keys: [jwk] } };
 }
+
+describe("Altbestand", () => {
+  it("alter Dauer-Salt und h:-Hashes werden beim ersten Lauf gelöscht, count bleibt", async () => {
+    const kv = mem();
+    await kv.put("salt", "f".repeat(64)); await kv.put("h:" + "c".repeat(64), 1); await kv.put("count", 7);
+    const s = new VisitorStore(kv, at("2026-10-30T10:00:00Z"));
+    await s.visit("1.2.3.4");
+    expect([...kv.data.keys()].some((k) => k.startsWith("h:"))).toBe(false);
+    expect(JSON.stringify([...kv.data.values()])).not.toContain("f".repeat(64));
+    expect(await kv.get("count")).toBe(8);
+  });
+});

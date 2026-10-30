@@ -14,7 +14,8 @@ export type KV = {
 type Day = { visits: number; uniques: number };
 export type Week = { week: string; visits: number; uniques: number };
 
-const HASH_PREFIXES = ["seen:", "fb:", "st:rl:"];
+// "h:" = dauerhafte IP-Hashes aus dem Altstand; werden beim ersten Lauf mitgelöscht.
+const HASH_PREFIXES = ["seen:", "fb:", "st:rl:", "h:"];
 
 export function utcDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
