@@ -7,3 +7,18 @@
 .bl-sat-revoke:disabled { background: var(--bl-surface); color: var(--bl-text); border-color: var(--bl-border); cursor: default; }
 .bl-sat-msg { color: var(--bl-text); }
 @media (prefers-reduced-motion: reduce) { .bl-sat-revoke { transition: none; } }
+
+/* Esri-Links: Tippfläche ≥ 44 px ohne Layoutsprung (Padding, Gegen-Margin) */
+.bl-legal-tokens .bl-sat-link {
+  display: inline-block;
+  padding-block: 11px;
+  margin-block: -11px;
+  line-height: 22px;
+  color: var(--bl-text);
+  text-decoration-color: var(--bl-accent);
+  text-underline-offset: 3px;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+.bl-legal-tokens .bl-sat-link:focus-visible { outline: 2px solid var(--bl-accent); outline-offset: 2px; }

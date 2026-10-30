@@ -74,6 +74,18 @@ const SAT_UI = {
   de: { h: "Satellitenvorschau", st: "Status deiner Einwilligung:", yes: "erteilt", no: "nicht erteilt", btn: "Einwilligung widerrufen", done: "Deine Einwilligung ist widerrufen. Die App lädt nichts mehr von Esri.", err: "Widerruf nicht gespeichert: Dein Browser blockiert den Gerätespeicher. Bitte lösche die Website-Daten in den Browser-Einstellungen." },
   en: { h: "Satellite preview", st: "Status of your consent:", yes: "given", no: "not given", btn: "Withdraw consent", done: "Your consent has been withdrawn. The app no longer loads anything from Esri.", err: "Withdrawal not saved: your browser blocks device storage. Please delete the site data in your browser settings." },
 };
+/** Esri-URLs im Fließtext klickbar machen, Wortlaut unverändert (Lead 13:30). */
+const SAT_LINK = /(https:\/\/[^\s]+?)(?=[.,;)]?(?:\s|$))/g;
+function linkify(text: string) {
+  return text.split(SAT_LINK).map((part, i) =>
+    i % 2 ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="bl-sat-link">{part}</a>
+    ) : (
+      part
+    ),
+  );
+}
+
 function SatPreviewPrivacy() {
   const lang = useLang();
   const ui = lang === "de" ? SAT_UI.de : SAT_UI.en;
@@ -92,7 +104,7 @@ function SatPreviewPrivacy() {
     <section id="satellitenvorschau" aria-labelledby="satellitenvorschau-h" className="bl-legal-tokens space-y-3">
       <style>{LEGAL_TOKEN_CSS}</style>
       <h2 id="satellitenvorschau-h">{ui.h}</h2>
-      <p>{t("privacySatP")}</p>
+      <p>{linkify(t("privacySatP"))}</p>
       <p data-bl-sat-status className="bl-sat-status">
         {ui.st} <strong>{allowed ? ui.yes : ui.no}</strong>
       </p>

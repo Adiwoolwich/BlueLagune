@@ -40,7 +40,7 @@ test("Konzept 1: Erlauben lädt nur Mock-Kacheln sichtbarer Karten mit Attributi
   const reqs = await open(page);
   await page.locator("[data-bl-sat-allow]").click();
   await expect(page.locator('[data-bl-sat="mock"]').first()).toBeVisible();
-  await expect(page.locator(".bl-sat-attr").first()).toContainText("Powered by Esri | Esri, Maxar, Earthstar Geographics");
+  await expect(page.locator(".bl-sat-attr").first()).toContainText("Powered by Esri | Vantor (formerly Maxar)");
   await page.waitForTimeout(400);
   expect(reqs.length).toBeGreaterThan(0);
   expect(reqs.every((u) => new URL(u).pathname.startsWith("/mock-sat/"))).toBe(true);

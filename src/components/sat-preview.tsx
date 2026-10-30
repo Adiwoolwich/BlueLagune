@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SAT_ASK, SAT_PREVIEW, SAT_PREVIEW_ATTRIBUTION, SAT_PREVIEW_MOCK, SAT_PREVIEW_POWERED, allowSat, askSat, l2, notNowSat, previewGrid, satAskVisible, useSatConsent } from "../lib/sat-preview";
+import { SAT_ASK, SAT_PREVIEW, SAT_PREVIEW_MOCK, SAT_PREVIEW_POWERED, useSatPreviewSources, allowSat, askSat, l2, notNowSat, previewGrid, satAskVisible, useSatConsent } from "../lib/sat-preview";
 import { useLang } from "../lib/i18n";
 import { cn } from "../lib/utils";
 
@@ -39,6 +39,7 @@ export function SatPreview({ lat, lng, className, height = 112 }: { lat: number;
   if (!SAT_PREVIEW) return null;
   const grid = previewGrid(lat, lng);
   const live = consent.allowed && visible && !failed && grid.tiles.every((t) => t.url);
+  const sources = useSatPreviewSources(live);
   const seed = Math.abs(Math.round(lat * 1000 + lng * 1000));
   return (
     <div ref={ref} className={cn("bl-sat", className)} style={{ height }} data-bl-sat={live ? (SAT_PREVIEW_MOCK ? "mock" : "live") : "vector"}>
@@ -68,7 +69,7 @@ export function SatPreview({ lat, lng, className, height = 112 }: { lat: number;
       {live ? (
         <span className="bl-sat-attr">
           {SAT_PREVIEW_MOCK ? <b className="bl-sat-mock">Mock · </b> : null}
-          {SAT_PREVIEW_POWERED} | {SAT_PREVIEW_ATTRIBUTION}
+          {SAT_PREVIEW_POWERED} | {sources}
         </span>
       ) : null}
     </div>

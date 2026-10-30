@@ -13,8 +13,40 @@ const env = (import.meta as unknown as { env?: Record<string, string | undefined
 export const SAT_PREVIEW: boolean = env.VITE_SAT_PREVIEW !== "0";
 export const SAT_PREVIEW_MOCK: boolean = env.VITE_SAT_MOCK !== "0";
 export const SAT_PREVIEW_ZOOM = 17;
-export const SAT_PREVIEW_ATTRIBUTION = "Esri, Maxar, Earthstar Geographics";
+/** Fallback-Bildquelle (Lex-QS 30.10.: Maxar heißt jetzt Vantor); echt dynamisch aus copyrightText wie bei der Karte. */
+export const SAT_PREVIEW_ATTRIBUTION = "Vantor (formerly Maxar)";
 export const SAT_PREVIEW_POWERED = "Powered by Esri";
+
+/** Metadaten-URL aus der Kachel-Vorlage in sat-source.ts (dort unverändert). */
+const previewMetaUrl = (key: string) => `${SAT_SOURCES["esri-imagery"].url.split("/tile/")[0]}?f=json&token=${encodeURIComponent(key)}`;
+/** copyrightText aus den Service-Metadaten; jeder Fehler → Fallback. Kein Cookie, kein Referrer, kein Cache. */
+export async function fetchPreviewCopyright(
+  key: string,
+  fetchFn: (u: string, init?: RequestInit) => Promise<Response> = (u, i) => fetch(u, i),
+): Promise<string> {
+  if (!key) return SAT_PREVIEW_ATTRIBUTION;
+  try {
+    const r = await fetchFn(previewMetaUrl(key), { credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" });
+    if (!r.ok) return SAT_PREVIEW_ATTRIBUTION;
+    const j = (await r.json()) as { copyrightText?: unknown };
+    const t = typeof j.copyrightText === "string" ? j.copyrightText.trim() : "";
+    return t ? t.slice(0, 300) : SAT_PREVIEW_ATTRIBUTION;
+  } catch {
+    return SAT_PREVIEW_ATTRIBUTION;
+  }
+}
+let previewSources = SAT_PREVIEW_ATTRIBUTION;
+let previewLoading = false;
+const srcSubs = new Set<() => void>();
+/** Bildquellen der Vorschau: Mock/ohne Key → Fallback; echt erst nach Einwilligung einmal laden (Aufruf nur aus sichtbarer Vorschau). */
+export function useSatPreviewSources(live: boolean): string {
+  const v = useSyncExternalStore((f) => (srcSubs.add(f), () => srcSubs.delete(f)), () => previewSources, () => previewSources);
+  if (live && !SAT_PREVIEW_MOCK && ESRI_API_KEY && !previewLoading) {
+    previewLoading = true;
+    void fetchPreviewCopyright(ESRI_API_KEY).then((t) => { previewSources = t; srcSubs.forEach((f) => f()); });
+  }
+  return v;
+}
 
 export type PreviewTile = { x: number; y: number; z: number; left: number; top: number; url: string | null };
 export type PreviewGrid = { tiles: PreviewTile[]; offX: number; offY: number };
