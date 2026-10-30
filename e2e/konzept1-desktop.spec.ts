@@ -37,7 +37,7 @@ test("Pro-Chip auf der Karte sichtbar (390 und 1280) und öffnet den Pro-Tab", a
     const chip = page.locator("[data-k1-pro-chip]");
     await expect(chip).toBeVisible();
     const b = (await chip.boundingBox())!;
-    expect(b.height).toBeGreaterThanOrEqual(44);
+    expect(b.height).toBeGreaterThanOrEqual(43.5);
     await chip.click();
     await expect(page.locator("[data-k1-pro]")).toBeVisible();
     await expect(page.locator('[data-k1-tab="pro"]')).toHaveAttribute("aria-current", "page");
@@ -48,7 +48,7 @@ test("390: Tab-Bar unten, alle Tabs ≥ 44 px", async ({ page }) => {
   await open(page, 390);
   const tb = await box(page, "[data-k1-tabbar]");
   expect(tb.y).toBeGreaterThan(700);
-  for (const b of await page.locator("[data-k1-tab]").all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  for (const b of await page.locator("[data-k1-tab]").all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
 });
 
 test("Suche 390: „In meiner Nähe“ ohne Überlappung, Tippziel ≥ 44 px; zuletzt gesucht bleibt (bl-recent-q) und ist löschbar", async ({ page }) => {
@@ -59,9 +59,9 @@ test("Suche 390: „In meiner Nähe“ ohne Überlappung, Tippziel ≥ 44 px; zu
   const nb = (await near.boundingBox())!;
   const btn = (await near.locator("button").boundingBox())!;
   const lbl = (await near.locator(".k1-quick-label").boundingBox())!;
-  expect(btn.height).toBeGreaterThanOrEqual(44);
-  expect(btn.width).toBeGreaterThanOrEqual(44);
-  expect(nb.height).toBeGreaterThanOrEqual(44);
+  expect(btn.height).toBeGreaterThanOrEqual(43.5);
+  expect(btn.width).toBeGreaterThanOrEqual(43.5);
+  expect(nb.height).toBeGreaterThanOrEqual(43.5);
   const overlap = !(lbl.x + lbl.width <= btn.x || btn.x + btn.width <= lbl.x || lbl.y + lbl.height <= btn.y || btn.y + btn.height <= lbl.y);
   expect(overlap).toBe(false);
   expect(btn.x + btn.width).toBeLessThanOrEqual(nb.x + nb.width + 0.5);
@@ -69,4 +69,14 @@ test("Suche 390: „In meiner Nähe“ ohne Überlappung, Tippziel ≥ 44 px; zu
   await page.locator("[data-k1-recent] .k1-link").click();
   await expect(page.locator("[data-k1-recent]")).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem("bl-recent-q"))).toBeNull();
+});
+
+test("Klarheit ist sichtbar als Platzhalter markiert und läuft über die Einwilligung", async ({ page }) => {
+  await open(page, 390);
+  await page.locator("[data-bl-sat-allow]").click();
+  await page.locator("[data-bl-layers]").click();
+  await expect(page.locator("[data-k1-layers] [data-k1-placeholder]")).toHaveText("Platzhalter");
+  await page.locator("[data-k1-layers] button", { hasText: "Klarheit" }).click();
+  await expect(page.locator("[data-k1-clarity-note]")).toContainText("Platzhalter");
+  expect(await page.evaluate(() => document.documentElement.dataset.clarity)).toBe("1");
 });

@@ -368,3 +368,7 @@
 :root[data-k="1"] .k1-tile-2 { display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 :root[data-k="1"] .k1-tile-sub { font-size: 12px; font-weight: 500; color: var(--bl-text-muted); }
 :root[data-k="1"] :is(.k1-chip, .k1-link):focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }
+
+/* ===== Konzept 1 P3: Klarheit sichtbar als Platzhalter (sat-source.ts unverändert) ===== */
+:root[data-k="1"] .k1-badge-ph { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; border: 1px dashed var(--bl-accent-warm); color: var(--bl-accent-warm); }
+:root[data-k="1"] .k1-layer-tiles + .k1-ph-note, :root[data-k="1"] .k1-ph-note { max-width: 252px; padding: 6px 8px; border-radius: 10px; border: 1px dashed var(--bl-accent-warm); }

@@ -47,6 +47,11 @@ const K: Record<string, L3> = {
   map: { de: "Karte", en: "Map" },
   sat: { de: "Satellit", en: "Satellite" },
   clarity: { de: "Klarheit", en: "Clarity" },
+  placeholder: { de: "Platzhalter", en: "Placeholder" },
+  clarityNote: {
+    de: "Klarheit ist ein Platzhalter: nur geschärfte Darstellung des normalen Satellitenbilds. Eine eigene Klarheit-Quelle folgt erst mit Key-Freigabe.",
+    en: "Clarity is a placeholder: only a sharpened view of the normal satellite image. A dedicated clarity source follows once the key is approved.",
+  },
   labels: { de: "Beschriftung", en: "Labels" },
   shareMap: { de: "Karte teilen", en: "Share map" },
   copied: { de: "Link kopiert", en: "Link copied" },
@@ -321,9 +326,11 @@ function MapTools({ clarity, setClarity }: { clarity: boolean; setClarity: (v: b
                   {m === "map" ? <MapIcon className="size-5" /> : m === "sat" ? <Satellite className="size-5" /> : <Sparkles className="size-5" />}
                 </span>
                 {k(m === "map" ? "map" : m === "sat" ? "sat" : "clarity", lang)}
+                {m === "clarity" ? <span className="k1-badge-ph" data-k1-placeholder>{k("placeholder", lang)}</span> : null}
               </button>
             ))}
           </div>
+          {mode === "clarity" ? <p className="k1-hint k1-ph-note" role="note" data-k1-clarity-note>{k("clarityNote", lang)}</p> : null}
           <button type="button" className="k1-row" aria-pressed={mapLabels} disabled={mapStyle !== "sat"} onClick={() => setMapLabels(!mapLabels)}>
             <BookOpen className="size-4" /> {k("labels", lang)}: {mapLabels ? k("on", lang) : k("off", lang)}
           </button>
