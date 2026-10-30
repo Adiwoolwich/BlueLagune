@@ -1,12 +1,17 @@
 import { EmailMessage } from "cloudflare:email";
+import { VisitorStore, handleAdmin, type KV } from "./worker/visitors";
 
 /**
- * Unique-IP counter. IPs are SHA-256 hashed with a random salt inside the
- * Durable Object. The raw IP is never stored or logged.
+ * Besuchszähler (Durable Object). Nur Tages-/Wochensummen; eindeutige Besucher pro Tag über
+ * SHA-256(täglich rotierender Zufalls-Salt + IP). IP/User-Agent werden nie gespeichert,
+ * Hash-Marker werden beim Tageswechsel gelöscht (siehe worker/visitors.ts).
  */
 export interface Env {
   ASSETS: Fetcher;
   VISITORS: DurableObjectNamespace;
+  /** Optional: Cloudflare-Access-Team-Domain und AUD-Tag für /admin/besuche (keine Secrets). */
+  ACCESS_TEAM_DOMAIN?: string;
+  ACCESS_AUD?: string;
   EMAIL: {
     send: (message: EmailMessage) => Promise<void>;
   };
@@ -21,34 +26,24 @@ export class VisitorCounter {
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    if (url.pathname === "/salt") {
-      let salt = await this.state.storage.get<string>("salt");
-      if (!salt) {
-        const bytes = crypto.getRandomValues(new Uint8Array(32));
-        salt = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-        await this.state.storage.put("salt", salt);
-      }
-      return new Response(salt);
+    const store = new VisitorStore(this.state.storage as unknown as KV);
+    if (url.pathname === "/hash" && request.method === "POST") {
+      const ip = (await request.text()).trim();
+      if (!ip) return new Response("", { status: 400 });
+      return new Response(await store.hash(ip));
     }
     if (url.pathname === "/count") {
-      const count = (await this.state.storage.get<number>("count")) ?? 0;
-      return Response.json({ count });
+      return Response.json({ count: await store.count() });
     }
     if (url.pathname === "/visit" && request.method === "POST") {
-      const hash = await request.text();
-      if (!hash || hash.length < 32 || hash.length > 128) {
-        const count = (await this.state.storage.get<number>("count")) ?? 0;
-        return Response.json({ count });
-      }
-      const key = `h:${hash}`;
-      const seen = await this.state.storage.get(key);
-      let count = (await this.state.storage.get<number>("count")) ?? 0;
-      if (!seen) {
-        await this.state.storage.put(key, 1);
-        count += 1;
-        await this.state.storage.put("count", count);
-      }
-      return Response.json({ count });
+      const ip = (await request.text()).trim();
+      await store.visit(ip || null);
+      return Response.json({ ok: true });
+    }
+    if (url.pathname === "/admin" && request.method === "GET") {
+      const env = JSON.parse(request.headers.get("x-bl-admin-env") || "{}");
+      const fwd = new Request(request.url, { headers: request.headers });
+      return handleAdmin(fwd, env, store);
     }
     if (url.pathname === "/feedback-rl" && request.method === "POST") {
       const hash = (await request.text()).trim();
@@ -118,25 +113,16 @@ type StationReport = { status: "ok" | "broken"; note?: string; at: number };
 
 const STATION_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]{1,79}$/;
 
-async function sha256Hex(value: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+async function readCount(env: Env): Promise<number> {
+  const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
+  const data = (await (await stub.fetch("https://visitors/count")).json()) as { count: number };
+  return data.count ?? 0;
 }
 
-async function uniqueCount(env: Env, ip: string | null): Promise<number> {
-  const id = env.VISITORS.idFromName("global");
-  const stub = env.VISITORS.get(id);
-  if (!ip) {
-    const res = await stub.fetch("https://visitors/count");
-    const data = (await res.json()) as { count: number };
-    return data.count ?? 0;
-  }
-  const saltRes = await stub.fetch("https://visitors/salt");
-  const salt = saltRes.ok ? await saltRes.text() : "bluelagune";
-  const hash = await sha256Hex(`${salt}\n${ip}`);
-  const res = await stub.fetch("https://visitors/visit", { method: "POST", body: hash });
-  const data = (await res.json()) as { count: number };
-  return data.count ?? 0;
+async function countVisit(env: Env, ip: string | null): Promise<void> {
+  const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
+  await stub.fetch("https://visitors/visit", { method: "POST", body: ip ?? "" });
 }
 
 function isSitePage(url: URL): boolean {
@@ -190,22 +176,20 @@ function escapeText(s: string): string {
   return s.replace(/\r/g, "").slice(0, 4000);
 }
 
-async function allowFeedback(env: Env, ip: string | null): Promise<boolean> {
-  if (!ip) return true;
-  const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
-  const saltRes = await stub.fetch("https://visitors/salt");
-  const salt = saltRes.ok ? await saltRes.text() : "bluelagune";
-  const hash = await sha256Hex(`${salt}\n${ip}`);
-  const res = await stub.fetch("https://visitors/feedback-rl", { method: "POST", body: hash });
-  return res.ok;
-}
-
+/** Tageshash der IP für Rate-Limits; ohne erreichbaren Salt kein Hash (kein fester Fallback). */
 async function hashedIp(env: Env, ip: string | null): Promise<string | null> {
   if (!ip) return null;
   const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
-  const saltRes = await stub.fetch("https://visitors/salt");
-  const salt = saltRes.ok ? await saltRes.text() : "bluelagune";
-  return sha256Hex(`${salt}\n${ip}`);
+  const res = await stub.fetch("https://visitors/hash", { method: "POST", body: ip });
+  return res.ok ? (await res.text()).trim() : null;
+}
+
+async function allowFeedback(env: Env, ip: string | null): Promise<boolean> {
+  const hash = await hashedIp(env, ip);
+  if (!hash) return true;
+  const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
+  const res = await stub.fetch("https://visitors/feedback-rl", { method: "POST", body: hash });
+  return res.ok;
 }
 
 async function allowReport(env: Env, ip: string | null): Promise<boolean> {
@@ -318,12 +302,19 @@ export default {
     }
 
     if (url.pathname === "/api/visitors") {
-      const ip = request.headers.get("CF-Connecting-IP");
-      const count = await uniqueCount(env, ip);
+      // Nur lesend (Anzeige); gezählt wird ausschließlich serverseitig beim Seitenabruf.
+      const count = await readCount(env);
       return Response.json(
         { count },
         { headers: { "Cache-Control": "no-store" } },
       );
+    }
+
+    if (url.pathname === "/admin/besuche" && request.method === "GET") {
+      const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
+      const headers = new Headers(request.headers);
+      headers.set("x-bl-admin-env", JSON.stringify({ ACCESS_TEAM_DOMAIN: env.ACCESS_TEAM_DOMAIN, ACCESS_AUD: env.ACCESS_AUD }));
+      return stub.fetch("https://visitors/admin", { headers });
     }
 
     if (url.pathname === "/api/reports" && request.method === "GET") {
@@ -348,7 +339,7 @@ export default {
 
     if (request.method === "GET" && isSitePage(url)) {
       const ip = request.headers.get("CF-Connecting-IP");
-      ctx.waitUntil(uniqueCount(env, ip).then(() => undefined));
+      ctx.waitUntil(countVisit(env, ip).catch(() => undefined));
     }
 
     return env.ASSETS.fetch(request);

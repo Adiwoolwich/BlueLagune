@@ -375,7 +375,7 @@ function MapApp() {
   }, [stations, bounds]);
 
   useEffect(() => {
-    fetch("/api/visitors").catch(() => {});
+    // Besuche zählt nur der Server beim Seitenabruf; kein Client-Zählaufruf.
     void fetchReports()
       .then((r) => useAppStore.getState().setServerReports(r))
       .catch(() => {});
