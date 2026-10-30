@@ -14,7 +14,7 @@ import { bootLang } from "./lib/i18n";
 
 bootLang();
 
-// Designvariante per ?design=nacht|sand|teal; ohne Parameter bleibt die heutige Optik.
+// Designvariante per ?design=nacht|sand|teal; ohne Parameter K1 (teal), alte Optik per ?alt=1.
 const design = designFromUrl(window.location.search);
 if (design) applyDesign(VARIANTS[design]);
 

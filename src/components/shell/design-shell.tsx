@@ -15,6 +15,7 @@ import { cn } from "../../lib/utils";
 import { useSatConsent, withSatConsent } from "../../lib/sat-preview";
 import { SatConsentPrompt, SatPreview } from "../sat-preview";
 import { Konzept1Shell } from "./konzept1";
+import { konzeptFromUrl } from "../../theme/tokens";
 
 /*
  * Gerüst für ?design=* (Supercharger-Stil): Such-Pill, Chip-Leiste, Standort-FAB,
@@ -413,7 +414,7 @@ function Frame({ children }: { children: ReactNode }) {
 export type ShellProps = { stations: Station[]; initial: MapView & { id?: string | null }; inViewCount: number; offlineOpen?: boolean; onLanding?: () => void; onGuide?: () => void };
 
 /** ?konzept= beim Laden lesen (url-state schreibt die URL später neu). */
-export const KONZEPT: string | null = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("konzept") : null;
+export const KONZEPT: string | null = typeof window !== "undefined" ? konzeptFromUrl(window.location.search) : null;
 
 export function DesignShell(props: ShellProps) {
   // Ohne Einwilligung (oder nach Widerruf) keine Satellitenansicht – auch nicht aus gespeichertem Zustand.

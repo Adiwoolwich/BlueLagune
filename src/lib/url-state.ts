@@ -133,7 +133,13 @@ export function replaceUrl(view: {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   if (path !== "/") return;
   const qs = buildSearchParams(view);
-  const next = `/?${qs}`;
+  // Oberflächenwahl (alt/design/konzept) beim Umschreiben behalten, sonst springt ein Reload auf den Standard.
+  const cur = new URLSearchParams(window.location.search);
+  const keep = new URLSearchParams();
+  for (const k of ["alt", "design", "konzept"]) { const v = cur.get(k); if (v !== null) keep.set(k, v); }
+  const ks = keep.toString();
+  const all = ks ? (qs ? `${ks}&${qs}` : ks) : qs;
+  const next = `/?${all}`;
   if (`${window.location.pathname}${window.location.search}` === next) return;
   window.history.replaceState(null, "", next);
 }
@@ -147,6 +153,12 @@ export function shareUrl(view: {
   query?: string;
 }): string {
   const qs = buildSearchParams(view);
+  // Oberflächenwahl (alt/design/konzept) beim Umschreiben behalten, sonst springt ein Reload auf den Standard.
+  const cur = new URLSearchParams(window.location.search);
+  const keep = new URLSearchParams();
+  for (const k of ["alt", "design", "konzept"]) { const v = cur.get(k); if (v !== null) keep.set(k, v); }
+  const ks = keep.toString();
+  const all = ks ? (qs ? `${ks}&${qs}` : ks) : qs;
   if (typeof window === "undefined") return `https://blue-lagune.com/?${qs}`;
   return `${window.location.origin}/?${qs}`;
 }

@@ -84,9 +84,28 @@ export function tokensToCss(t: TokenSet): string {
 export type DesignName = "nacht" | "sand" | "teal";
 export const DESIGNS: DesignName[] = ["nacht", "sand", "teal"];
 
+/** Standard ohne Parameter: K1 (design=teal + konzept=1, User-Wahl 30.10. 12:58). Alte Oberfläche nur per ?alt=1.
+ * Vorhandene ?design=/&konzept= gelten unverändert. */
+export const DEFAULT_DESIGN: DesignName = "teal";
+export const DEFAULT_KONZEPT = "1";
+
+function isAlt(q: URLSearchParams): boolean {
+  return q.get("alt") === "1";
+}
+
 export function designFromUrl(search: string): DesignName | null {
-  const v = new URLSearchParams(search).get("design");
-  return v && (DESIGNS as string[]).includes(v) ? (v as DesignName) : null;
+  const q = new URLSearchParams(search);
+  if (isAlt(q)) return null;
+  const v = q.get("design");
+  if (v === null) return DEFAULT_DESIGN;
+  return (DESIGNS as string[]).includes(v) ? (v as DesignName) : null;
+}
+
+export function konzeptFromUrl(search: string): string | null {
+  const q = new URLSearchParams(search);
+  const k = q.get("konzept");
+  if (k !== null || isAlt(q)) return k;
+  return q.get("design") === null ? DEFAULT_KONZEPT : null;
 }
 
 /**

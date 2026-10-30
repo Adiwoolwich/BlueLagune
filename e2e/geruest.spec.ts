@@ -119,8 +119,12 @@ test("Gerüst: Pin tippen fokussiert die Karte im Karussell", async ({ page }) =
   await expect(second.or(page.locator('.bl-g-card[aria-current="true"]'))).toBeInViewport();
 });
 
-test("Ohne Parameter bleibt die heutige Oberfläche", async ({ page }) => {
-  await openMap(page, { width: 390, path: "/" });
+test("Ohne Parameter: K1 als Standard; alte Oberfläche nur per ?alt=1", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("bl-skip-landing", "1"));
+  await openMap(page, { width: 390, path: "/", raw: true });
+  await expect(page.locator("[data-k1-tabbar]")).toBeVisible();
+  await openMap(page, { width: 390, path: "/?alt=1", raw: true });
   expect(await page.locator(".bl-g-pill").count()).toBe(0);
+  expect(await page.locator("[data-k1-tabbar]").count()).toBe(0);
   expect(await page.locator("[data-bl-rail]").count()).toBe(1);
 });
