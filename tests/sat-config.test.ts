@@ -38,7 +38,9 @@ describe("Satellit: eine Konfigurationsstelle, Esri mit Key, EOX als Rückfall",
   });
   it("Esri nur in der Konfigurationsstelle, nicht in Service Worker oder Offline-Download", () => {
     const hits = execSync("grep -rliE 'arcgis' src public || true", { encoding: "utf8" }).trim().split("\n").filter(Boolean);
-    expect(hits.sort()).toEqual(["public/sw.js", "src/lib/sat-source.ts"]);
+    expect(hits.sort()).toEqual(["public/sw.js", "src/lib/i18n.ts", "src/lib/sat-source.ts"]);
+    // i18n nur der Link trust.arcgis.com im Datenschutz-Baustein
+    expect(readFileSync("src/lib/i18n.ts", "utf8").split("\n").filter((l) => /arcgis/i.test(l)).every((l) => /privacySatP/.test(l))).toBe(true);
     const sw = readFileSync("public/sw.js", "utf8");
     // im SW nur als Ausschluss: NO_CACHE_HOSTS, nie in TILE_HOSTS
     expect(sw.split("\n").filter((l) => /arcgis/.test(l)).every((l) => /NO_CACHE_HOSTS/.test(l))).toBe(true);
