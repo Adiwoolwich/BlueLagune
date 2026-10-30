@@ -6,13 +6,15 @@ import { ESRI_API_KEY, SAT_SOURCES, satTileUrl } from "./sat-source";
  * - SAT_PREVIEW: abschaltbar per VITE_SAT_PREVIEW=0.
  * - Mock-Pflicht: solange VITE_SAT_MOCK nicht ausdrücklich "0" ist, werden NUR lokale Platzhalter (/mock-sat/) geladen.
  * - Echt (später): Esri World Imagery aus SAT_SOURCES, Key kommt ausschließlich aus der Umgebung (ESRI_API_KEY → __ESRI_API_KEY__).
- * - Einwilligung nur im Speicher (kein localStorage), kein Cache (fetch cache:"no-store", SW überspringt /mock-sat/ und Esri-Hosts).
+ * - Einmalige Einwilligung (localStorage, widerrufbar); Laden erst danach, lazy nur für sichtbare Karten (IntersectionObserver).
+ * - Nur normaler Browser-Cache: kein Prefetch, kein Server-/SW-/Offline-Cache (SW überspringt /mock-sat/ und Esri-Hosts).
  */
 const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
 export const SAT_PREVIEW: boolean = env.VITE_SAT_PREVIEW !== "0";
 export const SAT_PREVIEW_MOCK: boolean = env.VITE_SAT_MOCK !== "0";
 export const SAT_PREVIEW_ZOOM = 17;
 export const SAT_PREVIEW_ATTRIBUTION = "Esri, Maxar, Earthstar Geographics";
+export const SAT_PREVIEW_POWERED = "Powered by Esri";
 
 export type PreviewTile = { x: number; y: number; z: number; left: number; top: number; url: string | null };
 export type PreviewGrid = { tiles: PreviewTile[]; offX: number; offY: number };
@@ -44,21 +46,34 @@ export function previewGrid(lat: number, lng: number, z = SAT_PREVIEW_ZOOM, opts
   return { tiles, offX: p.x - tx0 * 256, offY: p.y - ty0 * 256 };
 }
 
-/* Einwilligung: nur im Speicher, gilt bis Neuladen. */
-let consent = false;
+/* Einwilligung: einmalige Abfrage, Wahl in localStorage („yes“/„no“), jederzeit widerrufbar. */
+export const SAT_CONSENT_KEY = "bl-sat-preview";
+export type SatChoice = "yes" | "no" | null;
+function readChoice(): SatChoice {
+  try {
+    const v = localStorage.getItem(SAT_CONSENT_KEY);
+    return v === "yes" || v === "no" ? v : null;
+  } catch {
+    return null;
+  }
+}
+let choice: SatChoice = typeof localStorage === "undefined" ? null : readChoice();
 const subs = new Set<() => void>();
-export function grantSatConsent() {
-  consent = true;
+export function setSatChoice(next: SatChoice) {
+  choice = next;
+  try {
+    if (next) localStorage.setItem(SAT_CONSENT_KEY, next);
+    else localStorage.removeItem(SAT_CONSENT_KEY);
+  } catch {
+    /* privat-Modus: gilt dann nur für die Sitzung */
+  }
   subs.forEach((f) => f());
 }
-export function resetSatConsent() {
-  consent = false;
-  subs.forEach((f) => f());
-}
-export function useSatConsent(): boolean {
+export const getSatChoice = () => choice;
+export function useSatChoice(): SatChoice {
   return useSyncExternalStore(
     (f) => (subs.add(f), () => subs.delete(f)),
-    () => consent,
-    () => false,
+    () => choice,
+    () => null,
   );
 }

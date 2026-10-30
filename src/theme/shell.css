@@ -236,6 +236,11 @@
 .bl-sat-attr { position: absolute; right: 0; bottom: 0; z-index: 3; padding: 2px 6px; font-size: 10px; line-height: 1.3; color: var(--bl-text);
   background: color-mix(in srgb, var(--bl-bg) 70%, transparent); border-top-left-radius: 6px; }
 .bl-sat-mock { color: var(--bl-accent-warm); text-transform: uppercase; letter-spacing: .04em; }
-.bl-sat-consent { position: absolute; left: 8px; bottom: 8px; z-index: 3; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px;
-  border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--bl-text); background: var(--bl-surface-glass); border: 1px solid var(--bl-border); }
-.bl-sat-consent:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }
+.bl-sat-ask { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: var(--bl-radius-sheet); color: var(--bl-text);
+  background: var(--bl-surface-glass); border: 1px solid var(--bl-border); box-shadow: var(--bl-shadow-2); }
+.bl-sat-ask-q { font-weight: 700; font-size: 15px; }
+.bl-sat-ask-why { font-size: 12.5px; color: var(--bl-text-muted); }
+.bl-sat-ask-row { display: flex; gap: 8px; justify-content: flex-end; }
+.bl-sat-ask-btn { min-height: 44px; min-width: 72px; padding: 0 16px; border-radius: 999px; font-weight: 600; color: var(--bl-text); border: 1px solid var(--bl-border); background: transparent; }
+.bl-sat-ask-yes { background: var(--bl-accent); color: var(--bl-accent-contrast); border-color: transparent; box-shadow: 0 0 14px var(--bl-glow); }
+.bl-sat-ask-btn:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }
