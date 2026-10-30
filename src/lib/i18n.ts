@@ -674,7 +674,9 @@ const en: Record<keyof typeof de, string> = {
   sourceCredits: "Station data: OpenStreetMap, Bordatlas, operators, community.",
 };
 
-const nl: Record<keyof typeof de, string> = {
+/** NL ohne eigene Rechtstexte (privacySatP/LsP/ProP/LawP): diese fallen bewusst auf EN zurück (Lex-Nachtrag 30.10.). */
+type NlOwnKeys = Exclude<keyof typeof de, "privacySatP" | "privacyLsP" | "privacyProP" | "privacyLawP">;
+const nlOwn: Record<NlOwnKeys, string> = {
   footerEmpty: "Legen",
   footerImprint: "Colofon",
   footerFeedback: "Feedback",
@@ -922,16 +924,12 @@ const nl: Record<keyof typeof de, string> = {
   privacyWhich: "Welke gegevens ontstaan",
   privacyMap: "Kaart:",
   privacyMapP: "Kaartgegevens © OpenStreetMap-bijdragers, vectortegels van OpenFreeMap (OpenMapTiles), satellietbeeld EOxCloudless 2016 van EOX IT Services GmbH (CC BY 4.0, bevat gewijzigde Copernicus Sentinel-gegevens). Je browser laadt de tegels rechtstreeks bij deze aanbieders; daarbij wordt je IP-adres verzonden.",
-  privacySatP: "Satellietkaart (Esri ArcGIS): Als je de satellietweergave inschakelt, laadt je browser kaarttegels rechtstreeks van servers van Environmental Systems Research Institute, Inc. (Esri), 380 New York Street, Redlands, CA 92373, VS. Daarbij worden je IP-adres, browser- en apparaatgegevens, het opgevraagde kaartgebied, het tijdstip en onze API-sleutel doorgegeven. Zonder inschakelen van de satellietweergave wordt niets aan Esri doorgegeven. Doel: weergave van de door jou gekozen satellietkaart en facturering en misbruikbescherming bij Esri. Rechtsgrond: art. 6 lid 1 sub f AVG (ons gerechtvaardigd belang om je op jouw verzoek een satellietkaart te tonen). Het tussentijds opslaan van de tegels in de browsercache is strikt noodzakelijk voor deze door jou gevraagde dienst (§ 25 lid 2 nr. 2 TDDDG). Verwerkersovereenkomst: Met Esri bestaat een verwerkersovereenkomst (Esri Data Processing Addendum) volgens art. 28 AVG. Doorgifte naar de VS: De EU-standaardcontractbepalingen zijn van toepassing (Art. 46 lid 2 sub c AVG). Bewaartermijn: Esri bewaart de gegevens volgens eigen zeggen alleen zo lang als nodig is voor deze doeleinden. Meer info: https://www.esri.com/en-us/privacy/privacy-statements/privacy-statement en https://trust.arcgis.com/en/compliance/gdpr.htm. Je kunt bezwaar maken tegen de verwerking op grond van art. 21 AVG. Het eenvoudigst laat je de satellietweergave uitgeschakeld.",
   privacyLoc: "Locatie:",
   privacyLocP: "alleen in de browser na toestemming, niet naar ons gestuurd.",
   privacyLs: "Local Storage:",
-  privacyLsP: "filters en bewaarde lijst op je apparaat.",
-  privacyProP: "Anonymous daily counters (\"Pro Europa\" test): When the \"Pro Europa\" notice is shown to you, when you tap \"Show interest\", or depending on which variant (Europe/France) you see, our server (Cloudflare Workers) increases a counter for that day. We do not store an IP address, hash, identifier or cookies, and we do not read anything from your device storage; for technical reasons your IP address is only processed briefly for the transmission. Only daily totals are created, with no link to you. The legal basis is Art. 6(1)(f) GDPR (our interest in finding out whether there is enough demand for Pro Europa). The test ends on 27/11/2026.",  // NL: Pro-Teile nur DE/EN
   privacyHost: "Hosting:",
   privacyHostP: "Cloudflare-logs (IP, tijdstip, bestand) voor beveiliging.",
   privacyLaw: "Rechtsgrondslagen",
-  privacyLawP: "Art. 6 lid 1 onder f AVG (exploitatie), onder a bij locatietoestemming.",
   privacyRights: "Jouw rechten",
   privacyRightsP: "Inzage, wissen, bezwaar. Contact:",
   privacyCookies: "Cookies",
@@ -948,6 +946,8 @@ const nl: Record<keyof typeof de, string> = {
   reportRate: "Te veel meldingen. Probeer het later opnieuw.",
   sourceCredits: "Stationsgegevens: OpenStreetMap, Bordatlas, exploitanten, community.",
 };
+
+const nl: Record<keyof typeof de, string> = { ...en, ...nlOwn };
 
 type Key = keyof typeof de | keyof typeof extraDe;
 

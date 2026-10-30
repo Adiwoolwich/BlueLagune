@@ -28,7 +28,7 @@ export const SAT_SOURCES = {
     // Location Platform, Basemap-Dienst (ibasemaps-api, zählt ins Basemap-Tiles-Freikontingent). Der Static-Basemap-Tiles-
     // Dienst hat kein reines Imagery (nur imagery/labels) → 404 im Echttest.
     url: "https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token={key}",
-    attribution: `Powered by <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> | Esri, Maxar, Earthstar Geographics, and the GIS User Community · ${NAMES}`,
+    attribution: `Powered by <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> | Esri, Vantor, Earthstar Geographics, and the GIS User Community · ${NAMES}`,
     maxNativeZoom: 19,
     needsKey: true,
     cacheable: false,

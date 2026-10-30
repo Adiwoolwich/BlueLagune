@@ -24,7 +24,7 @@ for (const width of [320, 390, 1280]) {
     expect(esri[0]).toContain("token=");
     const attr = page.locator(".leaflet-control-attribution");
     await expect(attr).toBeVisible();
-    for (const s of ["Powered by", "Esri", "Maxar", "Earthstar Geographics", "OpenStreetMap"]) await expect(attr).toContainText(s);
+    for (const s of ["Powered by", "Esri", "Vantor", "Earthstar Geographics", "OpenStreetMap"]) await expect(attr).toContainText(s);
     const covered = await attr.evaluate((el) => { const b = el.getBoundingClientRect(); const h = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return !h || !el.contains(h) || b.bottom > innerHeight || b.right > innerWidth; });
     expect(covered).toBe(false);
   });
@@ -58,7 +58,8 @@ test("Esri-Attribution bei 320 px einzeilig, „Powered by Esri“ sichtbar, ⓘ
   const info = page.locator("[data-bl-attr-toggle]");
   await expect(info).toBeVisible();
   await info.click();
-  await expect(attr).toContainText("Maxar");
+  await expect(attr).toContainText("Esri, Vantor, Earthstar Geographics, and the GIS User Community");
+  await expect(attr).not.toContainText("Maxar");
   expect((await attr.boundingBox())!.height).toBeGreaterThan(h);
   const full = await attr.evaluate((el) => el.scrollWidth <= el.clientWidth + 1);
   expect(full).toBe(true);

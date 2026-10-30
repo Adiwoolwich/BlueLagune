@@ -26,11 +26,12 @@ describe("Satellit: eine Konfigurationsstelle, Esri mit Key, EOX als Rückfall",
     expect(s.zoomOffset ?? 0).toBe(0);
   });
 
-  it("Esri-Attribution: Powered by Esri, Bildquellen Maxar/Earthstar, OSM", () => {
+  it("Esri-Attribution: Powered by Esri, Bildquellen Vantor/Earthstar, OSM", () => {
     const a = SAT_SOURCES["esri-imagery"].attribution;
     expect(a).toContain("Powered by");
     expect(a).toContain("Esri");
-    expect(a).toContain("Maxar");
+    expect(a).toContain("Esri, Vantor, Earthstar Geographics, and the GIS User Community");
+    expect(a).not.toContain("Maxar");
     expect(a).toContain("Earthstar Geographics");
     expect(a).toContain("OpenStreetMap");
   });

@@ -80,19 +80,20 @@ describe("Lead 13:30: Kommentar, Sat-Attribution, Esri-Links, NL", () => {
     expect(c).toMatch(/localStorage/);
     expect(c).not.toMatch(/Sitzung/);
   });
-  it("Vorschau-Attribution: kein festes Maxar, dynamisch aus copyrightText, Fallback Vantor; sat-source.ts unverändert", async () => {
+  it("Vorschau-Attribution: kein festes Maxar, dynamisch aus copyrightText, Fallback Esri/Vantor-Kette; sat-source.ts ohne Maxar", async () => {
     const m = await import("../src/lib/sat-preview");
-    expect(m.SAT_PREVIEW_ATTRIBUTION).toBe("Vantor (formerly Maxar)");
+    expect(m.SAT_PREVIEW_ATTRIBUTION).toBe("Esri, Vantor, Earthstar Geographics, and the GIS User Community");
     expect(read("src/lib/sat-preview.ts")).not.toMatch(/"Esri, Maxar/);
     const ok = async () => new Response(JSON.stringify({ copyrightText: "Source: Esri, Vantor, Earthstar Geographics" }), { status: 200 });
     expect(await m.fetchPreviewCopyright("K", ok)).toBe("Source: Esri, Vantor, Earthstar Geographics");
-    expect(await m.fetchPreviewCopyright("", ok)).toBe("Vantor (formerly Maxar)");
-    expect(await m.fetchPreviewCopyright("K", async () => new Response("x", { status: 500 }))).toBe("Vantor (formerly Maxar)");
-    expect(await m.fetchPreviewCopyright("K", async () => { throw new Error("offline"); })).toBe("Vantor (formerly Maxar)");
+    expect(await m.fetchPreviewCopyright("", ok)).toBe("Esri, Vantor, Earthstar Geographics, and the GIS User Community");
+    expect(await m.fetchPreviewCopyright("K", async () => new Response("x", { status: 500 }))).toBe("Esri, Vantor, Earthstar Geographics, and the GIS User Community");
+    expect(await m.fetchPreviewCopyright("K", async () => { throw new Error("offline"); })).toBe("Esri, Vantor, Earthstar Geographics, and the GIS User Community");
     let url = "";
     await m.fetchPreviewCopyright("K", async (u) => { url = u; return ok(); });
     expect(url).toBe("https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer?f=json&token=K");
-    expect(execSync("git diff --stat 831222f -- src/lib/sat-source.ts", { encoding: "utf8" }).trim()).toBe("");
+    expect(read("src/lib/sat-source.ts")).not.toMatch(/Maxar/);
+    expect(read("src/lib/sat-source.ts")).toContain("Esri, Vantor, Earthstar Geographics, and the GIS User Community");
   });
   it("Datenschutz: Esri-Links klickbar mit rel=noopener", () => {
     const l = read("src/components/legal-pages.tsx");

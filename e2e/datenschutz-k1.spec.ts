@@ -87,7 +87,7 @@ test("Datenschutz: Esri-Links im Kapitel klickbar, rel=noopener, Wortlaut unverÃ
   await expect(sec.locator("p").first()).toContainText("Mehr Infos: https://www.esri.com/en-us/privacy/privacy-statements/privacy-statement und https://trust.arcgis.com/en/compliance/gdpr.htm.");
 });
 
-test("Vorschau-Attribution im Mock: Powered by Esri + Fallback Vantor (formerly Maxar), kein Netz zu Esri", async ({ page }) => {
+test("Vorschau-Attribution im Mock: Powered by Esri + Fallback Esri-Vantor-Kette, kein Netz zu Esri", async ({ page }) => {
   const esri: string[] = [];
   page.on("request", (r) => { if (/arcgis|esri\.com/i.test(r.url())) esri.push(r.url()); });
   await page.addInitScript(() => { localStorage.setItem("bl-skip-landing", "1"); localStorage.setItem("bl-sat-preview", "yes"); });
@@ -95,7 +95,7 @@ test("Vorschau-Attribution im Mock: Powered by Esri + Fallback Vantor (formerly 
   await page.goto("/?lat=50.94&lng=6.96&z=11&design=teal&konzept=1");
   const attr = page.locator(".bl-sat-attr").first();
   await expect(attr).toBeVisible({ timeout: 15000 });
-  await expect(attr).toContainText("Powered by Esri | Vantor (formerly Maxar)");
+  await expect(attr).toContainText("Powered by Esri | Esri, Vantor, Earthstar Geographics, and the GIS User Community");
   await expect(attr).not.toContainText("Esri, Maxar");
   expect(esri).toEqual([]);
 });

@@ -13,8 +13,8 @@ const env = (import.meta as unknown as { env?: Record<string, string | undefined
 export const SAT_PREVIEW: boolean = env.VITE_SAT_PREVIEW !== "0";
 export const SAT_PREVIEW_MOCK: boolean = env.VITE_SAT_MOCK !== "0";
 export const SAT_PREVIEW_ZOOM = 17;
-/** Fallback-Bildquelle (Lex-QS 30.10.: Maxar heißt jetzt Vantor); echt dynamisch aus copyrightText wie bei der Karte. */
-export const SAT_PREVIEW_ATTRIBUTION = "Vantor (formerly Maxar)";
+/** Fallback-Bildquelle (Lex-QS 30.10.: Fallback nach Lex-Nachtrag); echt dynamisch aus copyrightText wie bei der Karte. */
+export const SAT_PREVIEW_ATTRIBUTION = "Esri, Vantor, Earthstar Geographics, and the GIS User Community";
 export const SAT_PREVIEW_POWERED = "Powered by Esri";
 
 /** Metadaten-URL aus der Kachel-Vorlage in sat-source.ts (dort unverändert). */
