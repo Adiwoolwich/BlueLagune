@@ -5,6 +5,7 @@ import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-500.css";
 import "./styles.css";
 import "./theme/theme.css";
+import "./theme/design.css";
 import { applyDesign, designFromUrl } from "./theme/tokens";
 import { VARIANTS } from "./theme/variants";
 import { App } from "./App";

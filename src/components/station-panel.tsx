@@ -402,13 +402,13 @@ function StationList({ stations }: { stations: Station[] }) {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <ul className="bl-scroll divide-y divide-line">
+      <ul className="bl-scroll bl-list divide-y divide-line">
         {visible.map((s) => {
           const km = origin && hasPreciseCoords(s) ? haversineKm(origin, s) : null;
           const fav = favorites.includes(s.id);
           const pin = STATUS_COLOR[deriveStatus(s, serverToLocal(s.id, serverReports[s.id], reports[s.id]))] ?? STATUS_COLOR.unknown;
           return (
-            <li key={s.id} className="bl-list-row">
+            <li key={s.id} className="bl-list-row" style={{ "--pin": pin } as React.CSSProperties}>
               <button
                 type="button"
                 onClick={() => select(s.id)}
@@ -425,17 +425,22 @@ function StationList({ stations }: { stations: Station[] }) {
                     {fav ? <Star className="size-3.5 shrink-0 fill-fg text-fg" /> : null}
                   </div>
                   <p className="mt-0.5 truncate text-[13px] leading-snug text-muted">{s.address || s.name}</p>
-                  <p className="truncate text-[12px] leading-snug text-muted">
+                  <p className="bl-row-badges" aria-hidden>
+                    {s.hours === "24h" ? <span className="bl-badge bl-badge-warm">24h</span> : null}
+                    {s.fee ? <span className="bl-badge">{feeLabel(s.fee)}</span> : null}
+                    <span className="bl-badge">{typeLabel(s.type)}</span>
+                  </p>
+                  <p className="bl-row-meta truncate text-[12px] leading-snug text-muted">
                     {[s.fee ? feeLabel(s.fee) : null, typeLabel(s.type), s.hours === "24h" ? "24h" : null]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
                 </div>
                 <div className="flex w-[4.75rem] shrink-0 flex-col items-center justify-center gap-1">
-                  <span className="grid size-9 place-items-center rounded-full" style={{ background: pin }} aria-hidden>
+                  <span className="bl-row-pin grid size-9 place-items-center rounded-full" style={{ background: pin }} aria-hidden>
                     <svg viewBox="0 0 24 24" width="16" height="16"><path fill="#ffffff" d="M12 2.5S5.5 10.4 5.5 15a6.5 6.5 0 0 0 13 0C18.5 10.4 12 2.5 12 2.5z" /></svg>
                   </span>
-                  {km != null ? <span className="text-[15px] font-semibold tabular-nums leading-none text-fg">{formatKm(km)}</span> : null}
+                  {km != null ? <span className="bl-row-km text-[15px] font-semibold tabular-nums leading-none text-fg">{formatKm(km)}</span> : null}
                 </div>
               </button>
             </li>

@@ -245,6 +245,7 @@ function MapApp() {
 
       <main className="absolute inset-0">
         <MapHost stations={stations} initialView={initial} />
+        <div className="bl-map-fade" aria-hidden />
         <div
           data-bl-keep-clear
           className="bl-topbar pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-2 px-3 pb-2 pt-[max(0.7rem,env(safe-area-inset-top))]"

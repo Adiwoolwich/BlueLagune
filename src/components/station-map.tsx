@@ -26,22 +26,60 @@ import { isCampsite, serverToLocal, useAppStore, type MapView } from "@/lib/stor
 import { replaceUrl } from "@/lib/url-state";
 import { t, useLang } from "@/lib/i18n";
 import { CAMPSITE_COLOR, STATUS_COLOR } from "./status-badge";
+import { currentDesign } from "@/theme/tokens";
 
 type StationProps = { id: string };
 
 const iconCache = new Map<string, L.DivIcon>();
 
 // Eigenes Tropfen-Glyph (BlueLagune), kein fremdes Icon.
+/** Basisstil mit Varianten-Palette; Token map-labels = "reduced" blendet Straßen- und Ortsteil-Namen aus. */
+function designBaseStyle(dark: boolean) {
+  const d = currentDesign();
+  const style = baseStyle(dark ? "dark" : "light", d?.mapPalette);
+  const labels = d ? (d.forceDark ? d.dark : d.light)["map-labels"] : "full";
+  if (labels === "reduced") style.layers = style.layers.filter((l) => l.id !== "road-name" && l.id !== "place-minor");
+  return style;
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
 
 const DROP_GLYPH = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="#ffffff" d="M12 2.5S5.5 10.4 5.5 15a6.5 6.5 0 0 0 13 0C18.5 10.4 12 2.5 12 2.5z"/></svg>`;
 
+/** Station-Glyph der neuen Optik: Tropfen über Welle (eigenes SVG). */
+const STATION_GLYPH = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#ffffff" d="M12 2.8S6.6 9.4 6.6 13.2a5.4 5.4 0 0 0 10.8 0C17.4 9.4 12 2.8 12 2.8z"/><path d="M3.5 20.2c1.4 0 2.1-1.1 3.4-1.1s2 1.1 3.4 1.1 2.1-1.1 3.4-1.1 2 1.1 3.4 1.1 2.1-1.1 3.4-1.1" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+
+/** Neue Optik (?design=…): eigener Pin mit Glow/Halo, aktiver Pin groß mit Ring-Puls. */
+function designPinIcon(_status: string, selected: boolean) {
+  // Pin-Farben kommen aus den Tokens marker / marker-active (nicht aus den Statusfarben).
+  const color = selected ? "var(--bl-marker-active)" : "var(--bl-marker)";
+  return selected
+    ? L.divIcon({
+        className: "bl-marker is-selected bl-m2",
+        html: `<span class="bl-p2 bl-p2-sel" style="--pin:${color};--pin-glow:var(--bl-glow-active)"><i class="bl-ring"></i><i class="bl-ring bl-ring-2"></i><svg class="bl-p2-shape" viewBox="0 0 52 66" width="48" height="61" aria-hidden="true"><path fill="${color}" stroke="#ffffff" stroke-width="2.5" d="M26 63S5 40 5 25a21 21 0 0 1 42 0C47 40 26 63 26 63z"/><g transform="translate(14 12)">${STATION_GLYPH.replace('width="16" height="16"', 'width="24" height="24"')}</g></svg></span>`,
+        iconSize: [56, 66],
+        iconAnchor: [28, 64],
+      })
+    : L.divIcon({
+        className: "bl-marker bl-m2",
+        html: `<span class="bl-p2" style="--pin:${color};--pin-glow:var(--bl-glow)">${STATION_GLYPH}</span>`,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+      });
+}
+
 function pinIcon(color: string, selected: boolean) {
-  const key = `pin-${color}-${selected ? "s" : "n"}`;
+  const design = currentDesign() != null;
+  const key = `pin-${color}-${selected ? "s" : "n"}-${design ? "d" : "o"}`;
   const hit = iconCache.get(key);
   if (hit) return hit;
+  if (design) {
+    const di = designPinIcon(color, selected);
+    iconCache.set(key, di);
+    return di;
+  }
   // Trefferfläche 44 px, sichtbarer Kreis 26/34 px (Tesla-Stil).
   // Ausgewählt: großer Tropfen-Pin (eigenes SVG), Spitze auf dem Ort.
   const icon = selected
@@ -61,11 +99,25 @@ function pinIcon(color: string, selected: boolean) {
   return icon;
 }
 
+/** „Dein Standort“ in der neuen Optik: kleiner Camper-Van (eigenes SVG), Draufsicht, dreht mit der Richtung. */
+const VAN_SVG = `<svg viewBox="0 0 32 40" width="30" height="38" aria-hidden="true"><rect x="7" y="4" width="18" height="32" rx="6" fill="var(--bl-accent-warm,#ffb547)" stroke="#0b0f14" stroke-width="1.5"/><rect x="9.5" y="7" width="13" height="6" rx="2" fill="#0b0f14" opacity=".75"/><rect x="10" y="17" width="12" height="9" rx="2" fill="#ffffff" opacity=".9"/><rect x="10" y="29" width="12" height="4" rx="1.5" fill="#0b0f14" opacity=".55"/></svg>`;
+
 function locIcon(heading: number | null) {
   const deg = heading == null ? 0 : Math.round(heading / 5) * 5;
-  const key = `loc-${deg}`;
+  const design = currentDesign() != null;
+  const key = `loc-${deg}-${design ? "d" : "o"}`;
   const hit = iconCache.get(key);
   if (hit) return hit;
+  if (design) {
+    const vi = L.divIcon({
+      className: "bl-marker bl-van",
+      html: `<span class="bl-van-wrap" aria-hidden="true"><i class="bl-van-halo"></i><span class="bl-van-rot" style="transform:rotate(${deg}deg)">${VAN_SVG}</span></span>`,
+      iconSize: [44, 44],
+      iconAnchor: [22, 22],
+    });
+    iconCache.set(key, vi);
+    return vi;
+  }
   const icon = L.divIcon({
     className: "bl-marker",
     html: `<span class="bl-loc" aria-hidden="true"><span class="bl-loc-rot" style="transform:rotate(${deg}deg)"><span class="bl-loc-chevron"></span><span class="bl-loc-dot"></span></span></span>`,
@@ -77,10 +129,21 @@ function locIcon(heading: number | null) {
 }
 
 function clusterIcon(count: number) {
-  const key = `cdrop-${count}`;
+  const design = currentDesign() != null;
+  const key = `cdrop-${count}-${design ? "d" : "o"}`;
   const hit = iconCache.get(key);
   if (hit) return hit;
   const size = count >= 100 ? "l" : count >= 20 ? "m" : "s";
+  if (design) {
+    const ci = L.divIcon({
+      className: "bl-marker bl-cluster bl-m2",
+      html: `<span class="bl-cl bl-c2 bl-cl-${size}"><b>${count}</b></span>`,
+      iconSize: [56, 56],
+      iconAnchor: [28, 28],
+    });
+    iconCache.set(key, ci);
+    return ci;
+  }
   const icon = L.divIcon({
     className: "bl-marker bl-cluster",
     html: `<span class="bl-cl bl-cl-${size}">${count}</span>`,
@@ -431,7 +494,7 @@ function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
       if (disposed) return;
       try {
         const next = maplibreGL({
-          style: baseStyle(dark ? "dark" : "light"),
+          style: designBaseStyle(dark),
           interactive: false,
           attribution: BASE_ATTRIBUTION,
           attributionControl: false,
@@ -468,10 +531,10 @@ function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
 
 function useDarkScheme() {
   const q = "(prefers-color-scheme: dark)";
-  const [dark, setDark] = useState(() => typeof matchMedia === "function" && matchMedia(q).matches);
+  const [dark, setDark] = useState(() => Boolean(currentDesign()?.forceDark) || (typeof matchMedia === "function" && matchMedia(q).matches));
   useEffect(() => {
     const m = matchMedia(q);
-    const on = () => setDark(m.matches);
+    const on = () => setDark(Boolean(currentDesign()?.forceDark) || m.matches);
     m.addEventListener("change", on);
     return () => m.removeEventListener("change", on);
   }, []);

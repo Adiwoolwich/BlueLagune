@@ -47,6 +47,11 @@ for (const [name, v] of Object.entries(all)) {
           expect(ratio(parse(t["text-muted"]), bg)).toBeGreaterThanOrEqual(4.5);
         }
       });
+      it("warmer Akzent auf Glas und auf Kachel ≥ 4,5:1 (nur neue Optik)", () => {
+        if (name === "default") return;
+        for (const bg of glassBgs(t).slice(1)) expect(ratio(parse(t["accent-warm"]), bg)).toBeGreaterThanOrEqual(4.5);
+        expect(ratio(parse(t["accent-warm"]), parse(t["chip-bg"]))).toBeGreaterThanOrEqual(4.5);
+      });
       it("Fokus und aktiver Marker ≥ 3:1 auf Fläche", () => {
         expect(ratio(parse(t.focus), parse(t.surface))).toBeGreaterThanOrEqual(3);
         expect(ratio(parse(t["marker-active"]), parse(t.bg))).toBeGreaterThanOrEqual(3);

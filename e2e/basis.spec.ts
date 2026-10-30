@@ -38,11 +38,25 @@ for (const design of ["", "teal"]) {
         const sheetRaw = (await page.locator("aside.bl-sheet").boundingBox())!;
         // nur der sichtbare Teil des Sheets zählt
         const top = Math.max(sheetRaw.y, 0);
-        const sheet = { ...sheetRaw, y: top, height: Math.min(sheetRaw.y + sheetRaw.height, height) - top };
+        // neue Optik schneidet den verschobenen Teil per clip-path ab (sichtbares Ende = Unterkante − Offset)
+        const clipBottom = await page.evaluate(() => {
+          const el = document.querySelector("aside.bl-sheet") as HTMLElement;
+          const r = el.getBoundingClientRect();
+          if (!getComputedStyle(el).clipPath.includes("inset")) return r.bottom;
+          const off = parseFloat(el.style.getPropertyValue("--sheet-offset")) || 0;
+          return r.bottom - (off * window.innerHeight) / 100;
+        });
+        const sheet = { ...sheetRaw, y: top, height: Math.min(clipBottom, height) - top };
         const attr = (await page.locator(".leaflet-control-attribution").boundingBox())!;
         expect(attr, "Attribution sichtbar").toBeTruthy();
         expect(overlap(attr, vp), "Attribution im Bild").toBe(true);
         expect(overlap(attr, sheet), "Sheet verdeckt Attribution").toBe(false);
+        // Attribution tatsächlich oben auf (nichts liegt darüber)
+        const onTop = await page.evaluate(({ x, y }) => {
+          const el = document.elementFromPoint(x, y);
+          return !!el?.closest(".leaflet-control-attribution, .leaflet-bottom, .leaflet-top");
+        }, { x: attr.x + Math.min(20, attr.width / 2), y: attr.y + attr.height / 2 });
+        expect(onTop, "Attribution von etwas überdeckt").toBe(true);
         for (const b of await visibleBox(page, "[data-bl-rail] button")) expect(overlap(b, sheet), "Rail-Knopf über Sheet").toBe(false);
         for (const b of await visibleBox(page, "[data-bl-search]")) expect(overlap(b, sheet), "Suche über Sheet").toBe(false);
         for (const b of await visibleBox(page, "[data-bl-offline-note]")) expect(overlap(b, sheet)).toBe(false);

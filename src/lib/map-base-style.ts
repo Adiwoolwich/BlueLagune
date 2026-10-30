@@ -7,7 +7,7 @@ import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
  */
 const NAME: ExpressionSpecification = ["coalesce", ["get", "name:de"], ["get", "name_de"], ["get", "name"], ["get", "name:latin"]];
 
-type Pal = {
+export type Pal = {
   bg: string; wood: string; park: string; water: string; waterLine: string; building: string;
   road: string; roadCase: string; major: string; majorCase: string; motorway: string; motorwayCase: string;
   rail: string; boundary: string; ink: string; inkMuted: string; halo: string; waterInk: string;
@@ -28,8 +28,9 @@ export const BASE_PALETTE: Record<"light" | "dark", Pal> = {
 
 const lerpW = (a: number, b: number): ExpressionSpecification => ["interpolate", ["exponential", 1.4], ["zoom"], 6, a, 18, b];
 
-export function baseStyle(scheme: "light" | "dark"): StyleSpecification {
-  const p = BASE_PALETTE[scheme];
+/** pal: optionale Varianten-Palette (src/theme/map-styles.ts), sonst Standard hell/dunkel. */
+export function baseStyle(scheme: "light" | "dark", pal?: Pal): StyleSpecification {
+  const p = pal ?? BASE_PALETTE[scheme];
   const road = (id: string, classes: string[], color: string, w: [number, number], minzoom = 5): StyleSpecification["layers"][number] => ({
     id, type: "line", source: "openmaptiles", "source-layer": "transportation", minzoom,
     filter: ["all", ["in", ["get", "class"], ["literal", classes]], ["!=", ["get", "brunnel"], "tunnel"]],

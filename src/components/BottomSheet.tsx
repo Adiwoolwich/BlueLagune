@@ -8,7 +8,9 @@ export function sheetSnaps(): { peek: number; mid: number; full: number } {
   const mid = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches ? 36.5 : 42;
   // Voll lässt oben Platz für Suche und Pflicht-Attribution (nie verdeckt): mind. 96 px frei.
   const vh = typeof window !== "undefined" ? window.innerHeight || 800 : 800;
-  const full = Math.min(90, 100 - (96 / vh) * 100);
+  // Neue Optik: unten liegt eine schmale Attributionsleiste (--bl-attr-h), das Sheet sitzt darüber.
+  const attr = typeof document !== "undefined" && document.documentElement.dataset.design ? 24 : 0;
+  const full = Math.min(90, 100 - ((96 + attr) / vh) * 100);
   return { peek: 24, mid, full };
 }
 
