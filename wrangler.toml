@@ -18,3 +18,7 @@ new_sqlite_classes = ["VisitorCounter"]
 [[send_email]]
 name = "EMAIL"
 destination_address = "woolwichvcc@gmail.com"
+
+[vars]
+ACCESS_TEAM_DOMAIN = "cool-queen-973f.cloudflareaccess.com"
+ACCESS_AUD = "18e97ced9cf3dd88620a864b538231380b5a450127bf0e59a4c3d034aa6ed4c9"
