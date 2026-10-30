@@ -519,9 +519,23 @@ aside.bl-sheet {
   .leaflet-bottom.leaflet-right {
     top: calc(max(0.7rem, env(safe-area-inset-top)) + 54px); bottom: auto; left: 12px; right: 68px;
   }
+  .leaflet-bottom.leaflet-right { display: flex; align-items: flex-start; gap: 4px; }
   .leaflet-bottom.leaflet-right .leaflet-control-attribution {
-    float: left; margin: 0 !important; border-radius: 6px !important;
+    float: none; flex: 0 1 auto; min-width: 0; margin: 0 !important; border-radius: 6px !important;
     font-size: 10px !important; line-height: 1.35; padding: 2px 6px !important;
-    white-space: normal; max-width: 100%;
+    /* einzeilig; Quelle („Powered by Esri“ / EOX / OpenFreeMap) steht vorn, ⓘ klappt alles auf */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
   }
+  .leaflet-bottom.leaflet-right.bl-attr-open .leaflet-control-attribution { white-space: normal; overflow: visible; }
+  .leaflet-bottom.leaflet-right .bl-attr-toggle { display: inline-flex; }
+}
+.bl-attr-toggle {
+  display: none; position: relative; float: none !important; margin: 0 !important; flex: none; order: 2;
+  width: 18px; height: 18px; align-items: center; justify-content: center; border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-chrome) 88%, transparent); color: var(--color-fg);
+  font-size: 12px; line-height: 1; border: 0; cursor: pointer; pointer-events: auto;
+}
+/* Tippfläche ≥ 44 px ohne größere Optik */
+.bl-attr-toggle::before { content: ""; position: absolute; inset: -13px -13px -13px 0; }
+@media (max-width: 1023px) {
 }

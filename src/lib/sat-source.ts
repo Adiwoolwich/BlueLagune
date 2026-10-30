@@ -1,7 +1,7 @@
 /**
  * Einzige Konfigurationsstelle für die Satellitenquelle.
  * - Mit ESRI_API_KEY (Build-Variable, Platzhalter in .env.example): Esri World Imagery über den
- *   Static Basemap Tiles Service der ArcGIS Location Platform (kommerziell erlaubt, MapLibre/Leaflet ok).
+ *   Basemap-Dienst (ibasemaps-api) der ArcGIS Location Platform (kommerziell erlaubt, MapLibre/Leaflet ok).
  *   Pflichten: „Powered by Esri“ + Bildquellen sichtbar, kein Proxy, kein Server-Cache, kein Offline-Speichern
  *   (siehe /workspace/legal/bluelagune-satellit-agb-20261030.md). Lädt nur, wenn der Nutzer Satellit wählt.
  * - Ohne Key: EOxCloudless 2016 (CC BY 4.0, ohne Konto).
@@ -25,11 +25,11 @@ const NAMES = 'Namen <a href="https://openfreemap.org" target="_blank" rel="noop
 export const SAT_SOURCES = {
   "esri-imagery": {
     id: "esri-imagery",
-    url: "https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/imagery/static/tile/{z}/{y}/{x}?token={key}",
+    // Location Platform, Basemap-Dienst (ibasemaps-api, zählt ins Basemap-Tiles-Freikontingent). Der Static-Basemap-Tiles-
+    // Dienst hat kein reines Imagery (nur imagery/labels) → 404 im Echttest.
+    url: "https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token={key}",
     attribution: `Powered by <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> | Esri, Maxar, Earthstar Geographics, and the GIS User Community · ${NAMES}`,
     maxNativeZoom: 19,
-    tileSize: 512,
-    zoomOffset: -1,
     needsKey: true,
     cacheable: false,
   },

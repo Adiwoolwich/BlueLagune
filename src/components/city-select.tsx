@@ -102,6 +102,13 @@ export function CitySelect({
       setMenuBox(null);
       return;
     }
+    // Pflicht-Attribution (mobil direkt unter der Suche) nie verdecken: Liste darunter beginnen.
+    function belowAttribution(input: DOMRect) {
+      let top = input.bottom + 4;
+      const a = document.querySelector(".leaflet-control-attribution")?.getBoundingClientRect();
+      if (a && a.height > 1 && a.bottom > top - 4 && a.top < top + 60 && Math.min(input.right, a.right) > Math.max(input.left, a.left)) top = a.bottom + 4;
+      return top;
+    }
     function keepClearBounds(input: DOMRect) {
       let reservedTop = 8;
       let reservedBottom = 8;
@@ -136,7 +143,7 @@ export function CitySelect({
         left: Math.max(8, Math.min(r.left, window.innerWidth - Math.min(r.width, window.innerWidth - 16) - 8)),
         width: Math.min(r.width, window.innerWidth - 16),
         maxHeight,
-        ...(openUp ? { bottom: window.innerHeight - r.top + 4 } : { top: r.bottom + 4 }),
+        ...(openUp ? { bottom: window.innerHeight - r.top + 4 } : { top: belowAttribution(r) }),
       });
     }
     place();

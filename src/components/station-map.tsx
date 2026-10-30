@@ -532,6 +532,7 @@ export function StationMap({
 
   return (
     <MapContainer
+      ref={(m) => { if (m) installAttrToggle(m); }}
       center={center}
       zoom={zoom}
       className="h-full w-full"
@@ -586,4 +587,30 @@ export function StationMap({
       <ClusterLayer stations={stations} />
     </MapContainer>
   );
+}
+
+/** ⓘ neben der Attribution: klappt die einzeilige Mobil-Attribution vollständig auf. */
+function installAttrToggle(map: L.Map) {
+  const m = map as L.Map & { _blAttrToggle?: boolean };
+  if (m._blAttrToggle) return;
+  m._blAttrToggle = true;
+  const Ctl = L.Control.extend({
+    onAdd() {
+      const b = L.DomUtil.create("button", "bl-attr-toggle leaflet-control") as HTMLButtonElement;
+      b.type = "button";
+      b.textContent = "ⓘ";
+      b.setAttribute("data-bl-attr-toggle", "");
+      b.setAttribute("aria-label", "Quellen / Attribution");
+      b.setAttribute("aria-expanded", "false");
+      L.DomEvent.disableClickPropagation(b);
+      L.DomEvent.on(b, "click", () => {
+        const corner = b.parentElement;
+        const open = !corner?.classList.contains("bl-attr-open");
+        corner?.classList.toggle("bl-attr-open", open);
+        b.setAttribute("aria-expanded", String(open));
+      });
+      return b;
+    },
+  });
+  new Ctl({ position: "bottomright" }).addTo(map);
 }
