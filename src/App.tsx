@@ -170,11 +170,11 @@ function Landing({ onDone }: { onDone: (openOffline?: boolean) => void }) {
             <button
               type="button"
               onClick={() => go(false)}
-              className="mt-4 text-sm font-medium text-primary underline-offset-2 hover:underline"
+              className="mt-2 inline-flex min-h-11 items-center px-4 text-sm font-medium text-primary underline-offset-2 hover:underline" data-bl-landing-once
             >
               {t("landingOnce")}
             </button>
-            <SiteFooter className="mt-8" />
+            <SiteFooter className="mt-6" />
           </div>
         </main>
       </div>

@@ -10,7 +10,7 @@ import { centerOfBounds, formatKm, haversineKm, inBounds } from "../../lib/geo";
 import { hasPreciseCoords, type Station } from "../../lib/stations";
 import { copyShareUrl, shareUrl } from "../../lib/url-state";
 import { postReport } from "../../lib/reports";
-import { feeLabel, t, typeLabel, useLang } from "../../lib/i18n";
+import { feeLabel, plural, t, typeLabel, useLang } from "../../lib/i18n";
 import { cn } from "../../lib/utils";
 import { useSatConsent, withSatConsent } from "../../lib/sat-preview";
 import { SatConsentPrompt, SatPreview } from "../sat-preview";
@@ -29,6 +29,7 @@ const TXT: Record<string, Record<Lang, string>> = {
   list: { de: "Liste", en: "List", nl: "Lijst" },
   offline: { de: "Offline", en: "Offline", nl: "Offline" },
   all: { de: "Alle {n} Stationen", en: "All {n} stations", nl: "Alle {n} stations" },
+  all_one: { de: "1 Station", en: "1 station", nl: "1 station" },
   close: { de: "Schließen", en: "Close", nl: "Sluiten" },
   drive: { de: "Fahrzeit", en: "Drive", nl: "Rijtijd" },
   dist: { de: "Entfernung", en: "Distance", nl: "Afstand" },
@@ -44,8 +45,11 @@ const TXT: Record<string, Record<Lang, string>> = {
   save: { de: "Merken", en: "Save", nl: "Bewaren" },
 };
 export function tx(k: keyof typeof TXT, lang: string, n?: number): string {
-  const v = TXT[k][(lang as Lang) in TXT[k] ? (lang as Lang) : "de"];
-  return n == null ? v : v.replace("{n}", String(n));
+  const pick = (key: string) => TXT[key]?.[(lang as Lang) in TXT[key] ? (lang as Lang) : "de"];
+  const v = pick(k)!;
+  if (n == null) return v;
+  // Plural (DE/EN): bei 1 die "_one"-Variante, z. B. „1 Station“ statt „Alle 1 Stationen“.
+  return plural(n, pick(`${k}_one`) ?? v, v, lang === "en" ? "en" : "de");
 }
 
 const RADIUS_CYCLE = [5, 10, 20, 50, 100];

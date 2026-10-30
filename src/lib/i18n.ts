@@ -959,7 +959,9 @@ function dictFor(lang: Lang): Record<string, string> {
 
 export function t(key: Key, vars?: Record<string, string | number>): string {
   const table = dictFor(current);
-  let out: string = table[key] ?? extraDe[key as keyof typeof extraDe] ?? de[key as keyof typeof de];
+  // Plural: bei n = 1 die Variante "<key>_one" nehmen, falls vorhanden (DE/EN).
+  const one = vars && String(vars.n) === "1" ? table[`${key}_one`] : undefined;
+  let out: string = one ?? table[key] ?? extraDe[key as keyof typeof extraDe] ?? de[key as keyof typeof de];
   if (vars) {
     for (const [k, v] of Object.entries(vars)) out = out.replaceAll(`{${k}}`, String(v));
   }
@@ -1060,3 +1062,9 @@ export function hoursLine(station: Station): string | null {
 
 void HOURS_LABEL;
 export { de, en, nl };
+
+/** Pluralform wählen (Intl-Regeln, DE/EN: „one“ nur bei 1). */
+export function plural(n: number, one: string, other: string, lang: string = current): string {
+  const rule = new Intl.PluralRules(lang === "en" ? "en" : "de").select(n);
+  return (rule === "one" ? one : other).replaceAll("{n}", String(n));
+}

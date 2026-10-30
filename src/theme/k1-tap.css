@@ -1,0 +1,6 @@
+/* Konzept 1 – Nacharbeit Cringe ff5ffea: Tippziele ≥ 44 px (Umkreis-Chips inkl. „–“, Sprache im Mehr-Tab).
+ * Eigene Datei, weil shell.css seit 831222f eingefroren ist (tests/k1-pro.test.ts). Nur Maße, keine Farben. */
+:root[data-k="1"] .k1 .k1-seg button { min-height: 44px; min-width: 44px; }
+/* Desktop-Liste: Mini-Satvorschau ohne eigene Quellenzeile (passt nicht in 88 px); die Quellen stehen
+ * einmal vollständig unter der Liste ([data-bl-list-sat-attr]). */
+:root[data-k="1"] .k1 .bl-list-sat .bl-sat-attr { display: none; }

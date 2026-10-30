@@ -13,7 +13,7 @@ import Supercluster from "supercluster";
 import "leaflet/dist/leaflet.css";
 
 import { SAT_LABEL_STYLE } from "@/lib/map-label-style";
-import { BASE_ATTRIBUTION, baseStyle, hasWebGL } from "@/lib/map-base-style";
+import { baseAttribution, baseStyle, hasWebGL, localizeAttribution } from "@/lib/map-base-style";
 import { SAT_FALLBACK, satSource, satTileUrl } from "@/lib/sat-source";
 import {
   deriveStatus,
@@ -519,7 +519,9 @@ function VectorLabels() {
 /** Gestochen scharfe Vektor-Basiskarte (MapLibre GL, WebGL, rendert mit devicePixelRatio). */
 function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
   const map = useMap();
+  const lang = useLang();
   useEffect(() => {
+    const attr = baseAttribution();
     let disposed = false;
     let layer: L.Layer | null = null;
     void Promise.all([import("@maplibre/maplibre-gl-leaflet"), import("maplibre-gl/dist/maplibre-gl.css"), import("@/lib/maplibre-worker")]).then(([{ default: maplibreGL }]) => {
@@ -528,7 +530,7 @@ function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
         const next = maplibreGL({
           style: designBaseStyle(dark),
           interactive: false,
-          attribution: BASE_ATTRIBUTION,
+          attribution: attr,
           attributionControl: false,
           zoomLevelsToOverscale: 8,
         // pane wird von maplibre-gl-leaflet unterstützt, fehlt aber in den Typen
@@ -537,7 +539,7 @@ function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
         layer = next;
         if (import.meta.env.VITE_BL_DEBUG) (window as unknown as Record<string, unknown>).__blgl = next;
         next.addTo(map);
-        map.attributionControl?.addAttribution(BASE_ATTRIBUTION);
+        map.attributionControl?.addAttribution(attr);
         const gl = (next as unknown as { getMaplibreMap?: () => { on: (e: string, f: (ev: { error?: Error }) => void) => void } }).getMaplibreMap?.();
         gl?.on("error", (ev) => {
           // Einzelne fehlende Kacheln ignorieren; nur Kontextverlust → Fallback.
@@ -554,10 +556,10 @@ function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
     }).catch(onFail);
     return () => {
       disposed = true;
-      map.attributionControl?.removeAttribution(BASE_ATTRIBUTION);
+      map.attributionControl?.removeAttribution(attr);
       if (layer) map.removeLayer(layer);
     };
-  }, [map, dark, onFail]);
+  }, [map, dark, onFail, lang]);
   return null;
 }
 
@@ -595,6 +597,7 @@ export function StationMap({
   initialView?: MapView;
 }) {
   const userPos = useAppStore((s) => s.userPos);
+  const lang = useLang();
   const mapStyle = useAppStore((s) => s.mapStyle);
   const dark = useDarkScheme();
   const online = useOnline();
@@ -649,8 +652,8 @@ export function StationMap({
     >
       {sat ? (
         <TileLayer
-          key={satSrc.id}
-          attribution={satSrc.attribution}
+          key={`${satSrc.id}-${lang}`}
+          attribution={localizeAttribution(satSrc.attribution)}
           url={satUrl}
           maxZoom={22}
           maxNativeZoom={satSrc.maxNativeZoom}

@@ -8,10 +8,11 @@ import { allStations, useAppStore, type Filters } from "../../lib/store";
 import { formatKm, haversineKm, inBounds } from "../../lib/geo";
 import { hasPreciseCoords, type Station } from "../../lib/stations";
 import { copyShareUrl, shareUrl } from "../../lib/url-state";
-import { setLang, t, useLang, type Lang } from "../../lib/i18n";
+import { plural, setLang, t, useLang, type Lang } from "../../lib/i18n";
 import { SAT_PREVIEW, askSat, revokeSat, useSatConsent, withSatConsent } from "../../lib/sat-preview";
 import { cn } from "../../lib/utils";
 import { Carousel, DetailCard, useDesktop, useOrigin, type ShellProps } from "./design-shell";
+import "../../theme/k1-tap.css";
 import { K1ProContent, useK1ProChipSeen } from "../pro-k1";
 
 /*
@@ -22,7 +23,7 @@ import { K1ProContent, useK1ProChipSeen } from "../pro-k1";
 
 type Tab = "karte" | "liste" | "favoriten" | "pro" | "mehr";
 /** Nur DE/EN (User 12:42: Niederländisch raus); nl fällt auf EN zurück. */
-type L3 = { de: string; en: string };
+type L3 = { de: string; en: string; deOne?: string; enOne?: string };
 const K: Record<string, L3> = {
   karte: { de: "Karte", en: "Map" },
   liste: { de: "Liste", en: "List" },
@@ -43,7 +44,7 @@ const K: Record<string, L3> = {
   gCost: { de: "Kosten", en: "Cost" },
   gPlace: { de: "Ort & Qualität", en: "Place & quality" },
   sort: { de: "Sortierung", en: "Sort" },
-  show: { de: "{n} Stationen zeigen", en: "Show {n} stations" },
+  show: { de: "{n} Stationen zeigen", en: "Show {n} stations", deOne: "1 Station zeigen", enOne: "Show 1 station" },
   reset: { de: "Zurücksetzen", en: "Reset" },
   layers: { de: "Ebenen", en: "Layers" },
   map: { de: "Karte", en: "Map" },
@@ -83,8 +84,9 @@ const K: Record<string, L3> = {
   proChip: { de: "Pro", en: "Pro" },
 };
 const k = (key: keyof typeof K, lang: Lang, n?: number) => {
-  const v = lang === "de" ? K[key].de : K[key].en;
-  return n == null ? v : v.replace("{n}", String(n));
+  const e = K[key];
+  if (n == null) return lang === "de" ? e.de : e.en;
+  return plural(n, (lang === "de" ? e.deOne : e.enOne) ?? (lang === "de" ? e.de : e.en), lang === "de" ? e.de : e.en, lang === "de" ? "de" : "en");
 };
 
 const GROUPS: { title: keyof typeof K; items: { key: keyof Filters; label: Parameters<typeof t>[0] }[] }[] = [

@@ -25,7 +25,7 @@ import { postReport } from "../lib/reports";
 import { feeLabel, hoursLine, t, typeLabel, useLang } from "../lib/i18n";
 import { cn } from "../lib/utils";
 import { useSatConsent, withSatConsent } from "../lib/sat-preview";
-import { SatConsentPrompt } from "./sat-preview";
+import { SatConsentPrompt, SatPreview, SatPreviewAttribution } from "./sat-preview";
 
 function Chip({
   active,
@@ -377,6 +377,11 @@ function StationList({ stations }: { stations: Station[] }) {
   const routePath = useAppStore((s) => s.routePath);
   const reports = useAppStore((s) => s.reports);
   const serverReports = useAppStore((s) => s.serverReports);
+  // Konzept 1, Desktop-Liste (≥ 1024 px): Satellitenvorschau je Zeile – nur mit Einwilligung (bl-sat-preview = yes),
+  // sonst gar kein Vorschau-Element (also auch kein Esri-Request).
+  const satAllowed = useSatConsent().allowed;
+  const k1Desktop = useK1Desktop();
+  const satThumb = satAllowed && k1Desktop;
   const origin = userPos ?? (bounds ? centerOfBounds(bounds) : null);
   const visible = useMemo(() => {
     const inView = bounds
@@ -419,6 +424,11 @@ function StationList({ stations }: { stations: Station[] }) {
                   selectedId === s.id ? "bg-surface" : "",
                 )}
               >
+                {satThumb ? (
+                  <span className="bl-list-sat w-[88px] shrink-0" data-bl-list-sat>
+                    <SatPreview lat={s.lat} lng={s.lng} height={64} />
+                  </span>
+                ) : null}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[16px] font-semibold leading-tight text-fg">
@@ -449,6 +459,7 @@ function StationList({ stations }: { stations: Station[] }) {
           );
         })}
       </ul>
+      {satThumb ? <SatPreviewAttribution className="px-3 py-2 text-[11px] leading-snug text-muted" /> : null}
     </div>
   );
 }
@@ -1004,4 +1015,22 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
       <OfflineButton floating openOnMount={offlineOpen} />
     </div>
   );
+}
+
+/** Konzept 1 (?konzept=1) im Desktop-Layout (≥ 1024 px). */
+function useK1Desktop(): boolean {
+  const q = "(min-width: 1024px)";
+  const get = () => typeof window !== "undefined" && document.documentElement.dataset.k === "1" && window.matchMedia(q).matches;
+  const [on, setOn] = useState(get);
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const f = () => setOn(get());
+    f();
+    m.addEventListener("change", f);
+    // data-k setzt die Shell erst in ihrem Effekt (nach unserem) → Attribut beobachten.
+    const mo = new MutationObserver(f);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-k"] });
+    return () => (m.removeEventListener("change", f), mo.disconnect());
+  }, []);
+  return on;
 }

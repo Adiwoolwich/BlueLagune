@@ -76,6 +76,19 @@ export function SatPreview({ lat, lng, className, height = 112 }: { lat: number;
   );
 }
 
+/** Eine gemeinsame Quellenzeile für mehrere kleine Vorschauen (Desktop-Liste K1); gleicher Inhalt wie je Vorschau. */
+export function SatPreviewAttribution({ className }: { className?: string }) {
+  const consent = useSatConsent();
+  const sources = useSatPreviewSources(consent.allowed);
+  if (!SAT_PREVIEW || !consent.allowed) return null;
+  return (
+    <p className={cn("bl-sat-attr-line", className)} data-bl-list-sat-attr>
+      {SAT_PREVIEW_MOCK ? <b className="bl-sat-mock">Mock · </b> : null}
+      {SAT_PREVIEW_POWERED} | {sources}
+    </p>
+  );
+}
+
 /** Abfrage mit zwei gleichwertigen Knöpfen, nichts vorausgewählt (Wortlaut: Lex, 30.10.2026). */
 export function SatConsentPrompt({ className, onlyWhenAsked }: { className?: string; onlyWhenAsked?: boolean }) {
   const lang = useLang();

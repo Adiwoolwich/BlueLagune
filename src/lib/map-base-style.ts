@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
 
 /**
@@ -45,7 +46,7 @@ export function baseStyle(scheme: "light" | "dark", pal?: Pal): StyleSpecificati
         type: "vector",
         tiles: ["https://tiles.openfreemap.org/planet/bluelagune/{z}/{x}/{y}.pbf"],
         maxzoom: 14,
-        attribution: '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Daten © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende',
+        attribution: '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Daten © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende',  // Anzeige: baseAttribution()
       },
     },
     glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
@@ -104,6 +105,17 @@ export function baseStyle(scheme: "light" | "dark", pal?: Pal): StyleSpecificati
 
 export const BASE_ATTRIBUTION =
   '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Daten © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+
+/** Sichtbare Basis-Attribution in der aktiven Sprache (i18n „attrData“); Quellnamen bleiben unverändert. */
+export function baseAttribution(): string {
+  return BASE_ATTRIBUTION.replace("Daten ©", `${t("attrData")} ©`);
+}
+
+/** Satelliten-Attribution aus sat-source.ts lokalisieren: nur die deutschen Beiwörter („Satellit:“, „Namen“),
+ *  Lizenz-/Quellnamen und die Esri-Kette bleiben wörtlich. */
+export function localizeAttribution(html: string): string {
+  return html.replace(/^Satellit:/, `${t("attrSat")}:`).replace(/· Namen </, `· ${t("attrNames")} <`).replace(/>OpenStreetMap<\/a>-Mitwirkende/, `>OpenStreetMap</a> ${t("attrContrib")}`);
+}
 
 export function hasWebGL(): boolean {
   try {
