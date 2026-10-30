@@ -24,6 +24,7 @@ const t = {
   border: "#2b3d39",
   focus: "#5eead4",
   "accent-warm": "#ffb547",
+  "tile-accent": "#2dd4bf",
   glow: "rgb(45 212 191 / 0.5)",
   "glow-active": "rgb(255 181 71 / 0.7)",
   "map-labels": "reduced",
