@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { openMap } from "./helpers";
 
+// Satellit liegt hinter der Esri-Einwilligung (Lex, 30.10.): hier vorab erteilt.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => localStorage.setItem("bl-sat-preview", "yes")); });
+
 // Läuft gegen einen Build mit Platzhalter-Key (BL_ESRI_PORT); Esri-Netz wird gemockt, kein echter Key.
 const port = process.env.BL_ESRI_PORT;
 test.skip(!port, "nur mit BL_ESRI_PORT (Build mit ESRI_API_KEY-Platzhalter)");

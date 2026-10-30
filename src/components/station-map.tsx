@@ -27,6 +27,7 @@ import { replaceUrl } from "@/lib/url-state";
 import { t, useLang } from "@/lib/i18n";
 import { CAMPSITE_COLOR, STATUS_COLOR } from "./status-badge";
 import { currentDesign } from "@/theme/tokens";
+import { useSatConsent } from "@/lib/sat-preview";
 
 type StationProps = { id: string };
 
@@ -601,7 +602,9 @@ export function StationMap({
   const onGlFail = useMemo(() => () => setGlOk(false), []);
   // Satellit auf Wunsch oder als Fallback ohne WebGL (EOX Sentinel-2 cloudless 2016, CC BY 4.0).
   // Offline nur die gespeicherte Vektorkarte (OpenFreeMap); Satellit gibt es offline nicht.
-  const userSat = online && mapStyle === "sat";
+  // Einwilligungs-Gate (Lex, 30.10.): Esri-Satellit erst nach „Erlauben“, auch bei gespeichertem mapStyle.
+  const satOk = useSatConsent().allowed;
+  const userSat = online && mapStyle === "sat" && satOk;
   const sat = userSat || (online && !glOk);
   // Gewählte Quelle (Esri mit Key, sonst EOX) nur bei Nutzerwahl; Rückfall ohne WebGL immer EOX.
   const satSrc = userSat ? satSource() : SAT_FALLBACK;

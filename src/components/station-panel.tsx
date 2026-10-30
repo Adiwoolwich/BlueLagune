@@ -24,6 +24,8 @@ import { copyShareUrl, shareUrl } from "../lib/url-state";
 import { postReport } from "../lib/reports";
 import { feeLabel, hoursLine, t, typeLabel, useLang } from "../lib/i18n";
 import { cn } from "../lib/utils";
+import { useSatConsent, withSatConsent } from "../lib/sat-preview";
+import { SatConsentPrompt } from "./sat-preview";
 
 function Chip({
   active,
@@ -965,23 +967,27 @@ export function MapRoundButtons({ offlineOpen }: { offlineOpen?: boolean }) {
   const setMapStyle = useAppStore((s) => s.setMapStyle);
   const sheet = useAppStore((s) => s.sheet);
   const setSheet = useAppStore((s) => s.setSheet);
+  const satOk = useSatConsent().allowed;
+  const satOn = mapStyle === "sat" && satOk;
   return (
     <div className="relative flex flex-col gap-3">
+      <SatConsentPrompt onlyWhenAsked className="absolute right-14 top-0 z-[1200] w-72" />
       <LocateButton floating />
       <button
         type="button"
-        className={cn(fabCls, mapStyle === "sat" && "bg-primary text-primary-fg ring-primary")}
+        className={cn(fabCls, satOn && "bg-primary text-primary-fg ring-primary")}
         aria-label={t("mapLayers")}
         title={t("mapLayers")}
-        aria-pressed={mapStyle === "sat"}
+        aria-pressed={satOn}
         data-bl-maptype
         onClick={() => {
-          // Globus: Karte ↔ Satellit (Standard Karte).
-          if (mapStyle === "sat") setMapStyle("map");
-          else {
-            setMapStyle("sat");
-            if (!mapLabels) setMapLabels(true);
-          }
+          // Globus: Karte ↔ Satellit (Standard Karte); Satellit nur nach Einwilligung.
+          if (satOn) setMapStyle("map");
+          else
+            withSatConsent(() => {
+              setMapStyle("sat");
+              if (!useAppStore.getState().mapLabels) setMapLabels(true);
+            });
         }}
       >
         <Globe className="size-5" />

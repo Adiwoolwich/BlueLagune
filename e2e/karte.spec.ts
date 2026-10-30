@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { openMap } from "./helpers";
 
+// Satellit liegt hinter der Esri-Einwilligung (Lex, 30.10.): hier vorab erteilt.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => localStorage.setItem("bl-sat-preview", "yes")); });
+
 test.describe("Vektorkarte", () => {
   test("rendert als WebGL-Vektor, scharf mit devicePixelRatio", async ({ browser }) => {
     const ctx = await browser.newContext({ deviceScaleFactor: 2 });
@@ -94,7 +97,7 @@ for (const width of [320, 390, 1280]) {
 
 test("Vektorkarte zeichnet echte Kacheln (Worker lädt, Bild nicht einfarbig)", async ({ page }) => {
   const workerResp: number[] = [];
-  page.on("response", (r) => { if (/maplibre-gl-worker.*\.js/.test(r.url())) workerResp.push(r.status()); });
+  page.on("response", (r) => { if (/maplibre-gl-worker.*\.m?js/.test(r.url())) workerResp.push(r.status()); });
   await openMap(page, { width: 1280, height: 800, net: true, path: "/?lat=50.94&lng=6.96&z=11" });
   await page.waitForTimeout(5000);
   expect(workerResp).toContain(200);

@@ -161,3 +161,18 @@ describe("Verfall der Tageshashes bis Mitternacht (Alarm statt expirationTtl)", 
     expect(keys).toEqual(["count", "d:2026-10-30", "st:station-1"]);
   });
 });
+
+describe("DSE-Versprechen: Löschung täglich um 00:00 UTC", () => {
+  it("Datenschutztext nennt 00:00 UTC, Worker setzt Alarm genau auf UTC-Mitternacht und alarm() ruft purge()", async () => {
+    const { extraDe, extraEn } = await import("../src/lib/i18n-extra");
+    expect(extraDe.privacyVisitP).toContain("täglich um 00:00 Uhr UTC");
+    expect(extraEn.privacyVisitP).toContain("every day at 00:00 UTC");
+    const t = Date.UTC(2026, 9, 30, 23, 59, 59);
+    expect(nextUtcMidnight(t)).toBe(Date.UTC(2026, 9, 31, 0, 0, 0));
+    expect(nextUtcMidnight(Date.UTC(2026, 9, 31, 0, 0, 0))).toBe(Date.UTC(2026, 10, 1));
+    const src = readFileSync("worker/visitors.ts", "utf8");
+    expect(src).toMatch(/setAlarm\??\.?\(?\s*nextUtcMidnight/);
+    const w = readFileSync("worker.ts", "utf8");
+    expect(w).toMatch(/async alarm\(\)[\s\S]{0,200}purge\(\)/);
+  });
+});

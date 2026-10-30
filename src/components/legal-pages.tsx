@@ -86,6 +86,7 @@ export function DatenschutzPage() {
         <li>
           <strong className="text-fg">{t("privacyHost")}</strong> {t("privacyHostP")}
         </li>
+        <li data-bl-privacy-visit>{t("privacyVisitP")}</li>
         <li>
           <strong className="text-fg">{t("privacyData")}</strong> {t("privacyDataP")}
         </li>

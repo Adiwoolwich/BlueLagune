@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { openMap } from "./helpers";
 
+// Satellit liegt hinter der Esri-Einwilligung (Lex, 30.10.): hier vorab erteilt.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => localStorage.setItem("bl-sat-preview", "yes")); });
+
 test("ohne Einschalten keine Anfrage an Esri; ohne Key Satellit = EOX, offline keine Esri-Anfrage", async ({ page, context }) => {
   const bad: string[] = [];
   context.on("request", (r) => { if (/arcgis|esri/i.test(r.url())) bad.push(r.url()); });

@@ -1,4 +1,6 @@
 export const extraDe = {
+  // Lex, Nachtrag 30.10. 12:57 (wörtlich)
+  privacyVisitP: "Besucherzählung und Missbrauchsbremse: Unser Server (Cloudflare Workers) bildet aus deiner IP-Adresse und einem zufälligen, täglich wechselnden Schlüssel einen nicht umkehrbaren Hashwert (SHA-256). Damit zählen wir, wie viele verschiedene Besucher die Seite pro Tag hat (Reichweitenmessung), und begrenzen, wie oft pro Stunde Feedback und Stationsmeldungen gesendet werden können (Missbrauchsschutz). Deine IP-Adresse selbst speichern wir dafür nicht. Hashwerte und Tagesschlüssel löschen wir täglich um 00:00 Uhr UTC (01:00 Uhr MEZ, 02:00 Uhr MESZ); danach bleiben nur anonyme Summen (Besuche und Besucher pro Tag). Cookies oder Speicher auf deinem Gerät nutzen wir dafür nicht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO; unser berechtigtes Interesse liegt in einer datensparsamen Reichweitenmessung und im Schutz des Dienstes vor Spam und Missbrauch. Du kannst nach Art. 21 DSGVO widersprechen. Bei der Missbrauchsbremse verarbeiten wir trotz Widerspruch weiter, soweit zwingende schutzwürdige Gründe für den Schutz des Dienstes deine Interessen überwiegen (Art. 21 Abs. 1 Satz 2 DSGVO).",
   offlineTitle: "Karte offline",
   offlineLead: "Speichere den Ausschnitt auf diesem Gerät. Stationen sind schon in der App.",
   offlineOnline: "Netzwerk da",
@@ -20,6 +22,7 @@ export const extraDe = {
 } as const;
 
 export const extraEn: Record<keyof typeof extraDe, string> = {
+  privacyVisitP: "Visitor count and abuse protection: Our server (Cloudflare Workers) creates a non-reversible hash (SHA-256) from your IP address and a random key that changes daily. We use it to count how many different visitors the site has per day (audience measurement) and to limit how often feedback and station reports can be sent per hour (abuse protection). We do not store your IP address itself for this. We delete the hashes and the daily key every day at 00:00 UTC (01:00 CET, 02:00 CEST); after that, only anonymous totals remain (visits and visitors per day). We do not use cookies or storage on your device for this. The legal basis is Art. 6(1)(f) GDPR; our legitimate interest is privacy-friendly audience measurement and protecting the service against spam and abuse. You can object under Art. 21 GDPR. For abuse protection, we may continue processing despite an objection where compelling legitimate grounds for protecting the service override your interests (Art. 21(1), second sentence, GDPR).",
   offlineTitle: "Offline map",
   offlineLead: "Save the area on this device. Stations are already in the app.",
   offlineOnline: "Online",
@@ -40,7 +43,8 @@ export const extraEn: Record<keyof typeof extraDe, string> = {
   offlineZoomIn: "Zoom in closer, then save.",
 };
 
-export const extraNl: Record<keyof typeof extraDe, string> = {
+// NL: neue Texte nur DE/EN (User 30.10. 12:42); fehlende Schlüssel fallen auf DE zurück.
+export const extraNl: Partial<Record<keyof typeof extraDe, string>> = {
   offlineTitle: "Kaart offline",
   offlineLead: "Sla dit gebied op dit apparaat op. Stations staan al in de app.",
   offlineOnline: "Online",

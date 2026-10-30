@@ -59,7 +59,9 @@ describe("Satellit: eine Konfigurationsstelle, Esri mit Key, EOX als Rückfall",
     expect(en.privacySatP).toContain("Legal basis: your consent (Art. 6(1)(a) GDPR, § 25(1) TDDDG).");
     expect(de.privacySatP).toContain("Esri Data Processing Addendum");
     expect(de.privacyLawP).toContain("und Satellitenvorschau");
-    expect(de.privacyLsP).toContain("Einwilligungswahl Satellitenvorschau");
+    expect(de.privacyLsP).toContain("deine Wahl zur Satellitenvorschau");
+    expect(de.privacyLsP).toContain("§ 25 Abs. 2 Nr. 2 TDDDG");
+    expect(de.privacyLawP).toContain("Besucherzählung und Missbrauchsbremse");
     expect(de.privacySatP).not.toMatch(/\b(Sie|Ihr|Ihre|Ihren|Ihrem)\b/);
     expect(nl.privacySatP).not.toMatch(/\b(u|uw)\b/);
     for (const l of [de, en, nl]) {

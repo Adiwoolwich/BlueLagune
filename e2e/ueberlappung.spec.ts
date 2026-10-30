@@ -1,6 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { openMap } from "./helpers";
 
+// Satellit liegt hinter der Esri-Einwilligung (Lex, 30.10.): hier vorab erteilt.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => localStorage.setItem("bl-sat-preview", "yes")); });
+
 type B = { x: number; y: number; width: number; height: number };
 const overlap = (a: B, b: B) => Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0.5;
 
