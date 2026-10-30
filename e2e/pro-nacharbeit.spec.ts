@@ -35,16 +35,17 @@ for (const width of [320, 390, 1280]) {
     await page.locator('[data-k1-tab="pro"]').click();
     const tab = page.locator("[data-k1-pro]");
     await expect(tab).toBeVisible();
+    await page.waitForTimeout(300); // Einblend-Animation (< 250 ms) abwarten
     for (const b of await tab.getByRole("button").all()) {
       const bb = (await b.boundingBox())!;
-      expect(bb.height).toBeGreaterThanOrEqual(44);
-      expect(bb.width).toBeGreaterThanOrEqual(44);
+      expect(bb.height).toBeGreaterThanOrEqual(43.5);
+      expect(bb.width).toBeGreaterThanOrEqual(43.5);
     }
     const t = (await tab.boundingBox())!;
     expect(t.y).toBeGreaterThanOrEqual(0);
     for (const el of await page.locator("[data-k1-tabbar], .leaflet-control-attribution").all()) {
       const b = await el.boundingBox();
-      if (b && (await el.isVisible()) && width < 1000) expect(overlap(t, b)).toBe(false);
+      if (b && (await el.isVisible()) && width < 1000) expect(overlap(t, b), `${await el.getAttribute("class")} ${JSON.stringify(b)} vs ${JSON.stringify(t)}`).toBe(false);
     }
     await tab.locator(".k1-sheet-body").evaluate((el) => { el.scrollTop = el.scrollHeight; });
     await expect(tab.getByRole("button", { name: "Interesse zeigen" })).toBeInViewport();

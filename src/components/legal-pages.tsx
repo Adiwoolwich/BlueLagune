@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { SAT_LATER_KEY, revokeSat, useSatConsent } from "@/lib/sat-preview";
 import { LEGAL, hasCompleteImprint } from "@/lib/legal";
 import { SiteFooter } from "@/components/site-footer";
 import { t, useLang } from "@/lib/i18n";
@@ -65,6 +66,42 @@ export function ImpressumPage() {
   );
 }
 
+/* Kapitel „Satellitenvorschau“ (miniHard, k1-pro): DSE-Text = privacySatP (wörtlich Lex, Abschnitt 2), hier nur einmal.
+ * Status + Widerruf: Schlüssel bl-sat-preview (localStorage „yes“); beim Widerruf auch bl-sat-preview-later (sessionStorage) löschen. */
+const SAT_UI = {
+  de: { h: "Satellitenvorschau", st: "Status deiner Einwilligung:", yes: "erteilt", no: "nicht erteilt", btn: "Einwilligung widerrufen", done: "Deine Einwilligung ist widerrufen. Die App lädt nichts mehr von Esri.", err: "Widerruf nicht gespeichert: Dein Browser blockiert den Gerätespeicher. Bitte lösche die Website-Daten in den Browser-Einstellungen." },
+  en: { h: "Satellite preview", st: "Status of your consent:", yes: "given", no: "not given", btn: "Withdraw consent", done: "Your consent has been withdrawn. The app no longer loads anything from Esri.", err: "Withdrawal not saved: your browser blocks device storage. Please delete the site data in your browser settings." },
+};
+function SatPreviewPrivacy() {
+  const lang = useLang();
+  const ui = lang === "de" ? SAT_UI.de : SAT_UI.en;
+  const { allowed } = useSatConsent();
+  const [msg, setMsg] = useState<string | null>(null);
+  function revoke() {
+    revokeSat();
+    try {
+      sessionStorage.removeItem(SAT_LATER_KEY);
+      setMsg(localStorage.getItem("bl-sat-preview") === null ? ui.done : ui.err);
+    } catch {
+      setMsg(ui.err);
+    }
+  }
+  return (
+    <section id="satellitenvorschau" aria-labelledby="satellitenvorschau-h" className="space-y-3">
+      <h2 id="satellitenvorschau-h">{ui.h}</h2>
+      <p>{t("privacySatP")}</p>
+      <p data-bl-sat-status className="text-fg">
+        {ui.st} <strong>{allowed ? ui.yes : ui.no}</strong>
+      </p>
+      <button type="button" onClick={revoke} disabled={!allowed}
+        className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 font-semibold text-primary-fg disabled:bg-surface disabled:text-fg disabled:ring-1 disabled:ring-border">
+        {ui.btn}
+      </button>
+      {msg ? <p role="status" className="text-fg">{msg}</p> : null}
+    </section>
+  );
+}
+
 export function DatenschutzPage() {
   useLang();
   return (
@@ -75,7 +112,7 @@ export function DatenschutzPage() {
       <h2>{t("privacyWhich")}</h2>
       <ul className="list-disc space-y-1 pl-5">
         <li>
-          <strong className="text-fg">{t("privacyMap")}</strong> {t("privacyMapP")} {t("privacySatP")}
+          <strong className="text-fg">{t("privacyMap")}</strong> {t("privacyMapP")} <a href="#satellitenvorschau">{useLang() === "de" ? "→ Satellitenvorschau" : "→ Satellite preview"}</a>
         </li>
         <li>
           <strong className="text-fg">{t("privacyLoc")}</strong> {t("privacyLocP")}
@@ -87,6 +124,7 @@ export function DatenschutzPage() {
           <strong className="text-fg">{t("privacyHost")}</strong> {t("privacyHostP")}
         </li>
         <li data-bl-privacy-visit>{t("privacyVisitP")}</li>
+        <li data-bl-privacy-pro>{t("privacyProP")}</li>
         <li>
           <strong className="text-fg">{t("privacyData")}</strong> {t("privacyDataP")}
         </li>
@@ -94,6 +132,7 @@ export function DatenschutzPage() {
           <strong className="text-fg">{t("privacyGeo")}</strong> {t("privacyGeoP")}
         </li>
       </ul>
+      <SatPreviewPrivacy />
       <h2>{t("privacyLaw")}</h2>
       <p>{t("privacyLawP")}</p>
       <h2>{t("privacyRights")}</h2>

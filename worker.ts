@@ -1,5 +1,6 @@
 import { EmailMessage } from "cloudflare:email";
 import { VisitorStore, handleAdmin, type KV } from "./worker/visitors";
+import { MetricStore, handleMetric, handleMetricAdmin } from "./worker/metrics";
 
 /**
  * Besuchszähler (Durable Object). Nur Tages-/Wochensummen; eindeutige Besucher pro Tag über
@@ -12,6 +13,8 @@ export interface Env {
   /** Optional: Cloudflare-Access-Team-Domain und AUD-Tag für /admin/besuche (keine Secrets). */
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
+  /** Pro-Europa-Test: "off" schaltet /api/metric ab. */
+  PRO_TEST?: string;
   EMAIL: {
     send: (message: EmailMessage) => Promise<void>;
   };
@@ -44,6 +47,15 @@ export class VisitorCounter {
       const ip = (await request.text()).trim();
       await store.visit(ip || null);
       return Response.json({ ok: true });
+    }
+    if (url.pathname === "/metric") {
+      const metrics = new MetricStore(this.state.storage as unknown as KV);
+      const pro = request.headers.get("x-bl-pro-test") || undefined;
+      return handleMetric(new Request("https://visitors/metric", { method: request.method, body: request.method === "POST" ? await request.text() : undefined }), { PRO_TEST: pro }, metrics);
+    }
+    if (url.pathname === "/metric-admin" && request.method === "GET") {
+      const env = JSON.parse(request.headers.get("x-bl-admin-env") || "{}");
+      return handleMetricAdmin(new Request(request.url, { headers: request.headers }), env, new MetricStore(this.state.storage as unknown as KV));
     }
     if (url.pathname === "/admin" && request.method === "GET") {
       const env = JSON.parse(request.headers.get("x-bl-admin-env") || "{}");
@@ -315,6 +327,18 @@ export default {
       );
     }
 
+    if (url.pathname === "/api/metric") {
+      const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
+      // Nur Ereignis + Variante weiterreichen – keine Header, keine IP.
+      const body = request.method === "POST" ? (await request.text()).slice(0, 65) : "";
+      return stub.fetch("https://visitors/metric", { method: request.method === "POST" ? "POST" : "GET", body: request.method === "POST" ? body : undefined, headers: { "x-bl-pro-test": env.PRO_TEST ?? "" } });
+    }
+    if (url.pathname === "/admin/pro" && request.method === "GET") {
+      const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
+      const headers = new Headers(request.headers);
+      headers.set("x-bl-admin-env", JSON.stringify({ ACCESS_TEAM_DOMAIN: env.ACCESS_TEAM_DOMAIN, ACCESS_AUD: env.ACCESS_AUD }));
+      return stub.fetch("https://visitors/metric-admin", { headers });
+    }
     if (url.pathname === "/admin/besuche" && request.method === "GET") {
       const stub = env.VISITORS.get(env.VISITORS.idFromName("global"));
       const headers = new Headers(request.headers);

@@ -1,0 +1,24 @@
+/* Konzept 1 – Pro-Tab (miniHard). Nur var(--bl-*), Übergänge < 250 ms, reduced-motion aus. */
+:root[data-k="1"] .k1-pro-body { display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.5; color: var(--bl-text); }
+:root[data-k="1"] .k1-pro-h { font-family: var(--bl-family-display); font-size: 22px; line-height: 1.2; font-weight: 700; color: var(--bl-text); margin: 0; }
+:root[data-k="1"] .k1-pro-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding-left: 18px; list-style: disc; color: var(--bl-text); }
+:root[data-k="1"] .k1-pro-price { padding: 12px; border-radius: var(--bl-radius-lg); background: var(--bl-surface); border: 1px solid var(--bl-border); }
+:root[data-k="1"] .k1-pro-price p { margin: 0; color: var(--bl-text); }
+:root[data-k="1"] .k1-pro-price-main { font-size: 18px; font-weight: 700; }
+:root[data-k="1"] .k1-pro-price-note { margin-top: 4px !important; font-weight: 600; }
+:root[data-k="1"] .k1-pro-muted { margin: 0; color: var(--bl-text-muted); }
+:root[data-k="1"] .k1-pro-thanks { margin: 0; padding: 12px; border-radius: var(--bl-radius-lg); background: var(--bl-surface); border: 1px solid var(--bl-accent); color: var(--bl-text); font-weight: 600; }
+:root[data-k="1"] .k1-pro-cta { min-height: 48px; width: 100%; padding: 0 16px; border-radius: var(--bl-radius-lg); font-weight: 700; font-size: 15px;
+  background: var(--bl-accent); color: var(--bl-accent-contrast); border: 0; transition: transform var(--bl-dur-fast) var(--bl-easing); }
+:root[data-k="1"] .k1-pro-cta:active { transform: scale(0.98); }
+:root[data-k="1"] .k1-pro-cta:focus-visible { outline: 2px solid var(--bl-focus); outline-offset: 2px; }
+:root[data-k="1"] .k1-pro-faq { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+:root[data-k="1"] .k1-pro-faq dt { font-weight: 600; color: var(--bl-text); }
+:root[data-k="1"] .k1-pro-faq dd { margin: 0; color: var(--bl-text-muted); }
+@media (prefers-reduced-motion: reduce) { :root[data-k="1"] .k1-pro-cta { transition: none; } }
+/* Pro-Tab mobil: hoher Inhalt darf nie über den oberen Rand wachsen (Body scrollt). */
+@media (max-width: 1023px) {
+  :root[data-k="1"] .k1-sheet-sm[data-k1-pro] { max-height: calc(100% - var(--bl-attr-h) - var(--k1-tab-h, 64px) - max(10px, env(safe-area-inset-top))); }
+  /* Offline-Hinweis schiebt sich unter die Suche: Chip rückt 8 px darunter (Wert setzt useK1ProChipSeen). */
+  :root[data-k="1"] .k1-pro-chip { top: max(calc(var(--bl-g-top-h) + 2px), var(--k1-pro-chip-top, 0px)); }
+}

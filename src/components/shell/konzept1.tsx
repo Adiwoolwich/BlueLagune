@@ -12,6 +12,7 @@ import { setLang, t, useLang, type Lang } from "../../lib/i18n";
 import { SAT_PREVIEW, askSat, revokeSat, useSatConsent, withSatConsent } from "../../lib/sat-preview";
 import { cn } from "../../lib/utils";
 import { Carousel, DetailCard, useDesktop, useOrigin, type ShellProps } from "./design-shell";
+import { K1ProContent, useK1ProChipSeen } from "../pro-k1";
 
 /*
  * Konzept 1 (Tab-Bar): unten Karte · Liste · Favoriten · Pro · Mehr, oben eine große zentrale Suche.
@@ -80,7 +81,6 @@ const K: Record<string, L3> = {
   proText: { de: "Status-Alarme für deine Route, ganz Europa, Offline-Pakete. Vorschau – nichts wird berechnet.", en: "Status alerts for your route, all of Europe, offline packs. Preview – nothing is charged." },
   nearby: { de: "Stationen im Kartenausschnitt", en: "Stations in view" },
   proChip: { de: "Pro", en: "Pro" },
-  proNote: { de: "Inhalt und Zähler kommen beim Zusammenführen aus pro-europa (ProModal).", en: "Content and counter come from pro-europa (ProModal) on merge." },
 };
 const k = (key: keyof typeof K, lang: Lang, n?: number) => {
   const v = lang === "de" ? K[key].de : K[key].en;
@@ -425,8 +425,7 @@ function ProSheet({ onClose }: { onClose: () => void }) {
         <button type="button" className="bl-g-icon" aria-label={k("close", lang)} onClick={onClose}><X className="size-5" /></button>
       </div>
       <div className="k1-sheet-body">
-        <p>{k("proText", lang)}</p>
-        <p className="k1-hint">{k("proNote", lang)}</p>
+        <K1ProContent />
       </div>
     </section>
   );
@@ -487,6 +486,7 @@ export function Konzept1Shell(props: ShellProps) {
   const [sub, setSub] = useState<"route" | "add" | "details" | null>(null);
   const recent = useRecent();
   const desktop = useDesktop();
+  useK1ProChipSeen(!search);
 
   useEffect(() => {
     const el = document.documentElement;

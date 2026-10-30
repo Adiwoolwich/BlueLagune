@@ -20,6 +20,8 @@ import { installTapHaptic } from "./lib/tap";
 import { OfflineNotice } from "./components/offline-panel";
 import { BottomSheet } from "./components/BottomSheet";
 import { DesignShell, KONZEPT } from "./components/shell/design-shell";
+import { ProPage } from "./components/pro-europa";
+import { proActive } from "./lib/pro-test";
 
 const SKIP_KEY = "bl-skip-landing";
 
@@ -185,6 +187,7 @@ export function App() {
   if (path === "/impressum") return <ImpressumPage />;
   if (path === "/datenschutz") return <DatenschutzPage />;
   if (path === "/feedback") return <FeedbackPage />;
+  if (path === "/pro" && proActive()) return <ProPage />;
   return <MapApp />;
 }
 
