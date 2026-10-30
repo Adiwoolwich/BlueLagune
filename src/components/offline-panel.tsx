@@ -68,7 +68,7 @@ export function OfflineNotice() {
   }, []);
   if (online) return null;
   return (
-    <div role="status" className="pointer-events-auto absolute left-3 right-3 top-[5.25rem] z-30 mx-auto flex max-w-md items-center gap-2 rounded-xl bg-black/90 px-3 py-2 text-xs text-white ring-1 ring-white/20">
+    <div role="status" className="pointer-events-auto absolute left-3 right-3 top-[5.25rem] z-30 mx-auto flex max-w-md items-center gap-2 rounded-xl bg-chrome px-3 py-2 text-xs text-chrome-fg ring-1 ring-border shadow-[var(--shadow-btn)]">
       <WifiOff className="size-4 shrink-0 text-bad" aria-hidden />
       <span>{t("offlineOffline")}</span>
     </div>

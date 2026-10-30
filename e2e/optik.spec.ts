@@ -16,7 +16,7 @@ for (const scheme of ["light", "dark"] as const) {
   test(`Theme ${scheme} folgt prefers-color-scheme`, async ({ page }) => {
     await openMap(page, { width: 390, scheme });
     const bg = await page.locator("aside").evaluate((el) => getComputedStyle(el).backgroundColor);
-    const rgb = bg.match(/\d+/g)!.slice(0, 3).map(Number);
+    const srgb = bg.startsWith("color("); const rgb = bg.replace("srgb", "").match(/[\d.]+/g)!.slice(0, 3).map(Number).map((v) => (srgb ? v * 255 : v));
     if (scheme === "light") expect(lum(rgb)).toBeGreaterThan(0.8);
     else expect(lum(rgb)).toBeLessThan(0.05);
     const theme = await page.locator("html").evaluate((el) => getComputedStyle(el).colorScheme);
@@ -26,7 +26,7 @@ for (const scheme of ["light", "dark"] as const) {
   test(`AA-Kontrast aller sichtbaren Texte (${scheme})`, async ({ page }) => {
     await openMap(page, { width: 390, scheme });
     const fails = await page.evaluate(() => {
-      const parse = (s: string) => { const m = s.match(/[\d.]+/g)!.map(Number); return { c: m.slice(0, 3), a: m.length > 3 ? m[3] : 1 }; };
+      const parse = (s: string) => { const srgb = s.startsWith("color("); const m = s.replace("srgb", "").match(/[\d.]+/g)!.map(Number); const c = m.slice(0, 3).map((v) => (srgb ? v * 255 : v)); return { c, a: m.length > 3 ? m[3] : 1 }; };
       const L = (rgb: number[]) => { const c = rgb.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
       const bgOf = (el: Element | null): number[] | null => {
         const stack: { c: number[]; a: number }[] = [];
@@ -85,8 +85,10 @@ for (const width of [320, 390]) {
     await openMap(page, { width });
     const over = await page.evaluate(() => {
       const d = document.documentElement;
+      // Element liegt in einem bewusst horizontal scrollbaren Chip-Streifen (kein Seiten-Querscrollen).
+      const hasXScroller = (e: Element) => { for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) { const o = getComputedStyle(p).overflowX; if (o === "auto" || o === "scroll") return true; } return false; };
       const wide = [...document.querySelectorAll('aside *, [data-bl-keep-clear] *')]
-        .filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 1 || r.left < -1) && !e.closest(".bl-chips"); })
+        .filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 1 || r.left < -1) && !e.closest(".bl-chips") && !hasXScroller(e); })
         .map((e) => e.tagName + "." + (e.className?.toString?.() ?? "").slice(0, 40));
       return { sw: d.scrollWidth, cw: d.clientWidth, wide };
     });

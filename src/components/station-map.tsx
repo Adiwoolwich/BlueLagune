@@ -13,6 +13,7 @@ import Supercluster from "supercluster";
 import "leaflet/dist/leaflet.css";
 
 import { SAT_LABEL_STYLE } from "@/lib/map-label-style";
+import { BASE_ATTRIBUTION, baseStyle, hasWebGL } from "@/lib/map-base-style";
 import {
   deriveStatus,
   findCity,
@@ -23,24 +24,34 @@ import {
 import { isCampsite, serverToLocal, useAppStore, type MapView } from "@/lib/store";
 import { replaceUrl } from "@/lib/url-state";
 import { t, useLang } from "@/lib/i18n";
-import { STATUS_COLOR } from "./status-badge";
+import { CAMPSITE_COLOR, STATUS_COLOR } from "./status-badge";
 
 type StationProps = { id: string };
 
 const iconCache = new Map<string, L.DivIcon>();
 
+// Eigenes Tropfen-Glyph (BlueLagune), kein fremdes Icon.
+const DROP_GLYPH = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="#ffffff" d="M12 2.5S5.5 10.4 5.5 15a6.5 6.5 0 0 0 13 0C18.5 10.4 12 2.5 12 2.5z"/></svg>`;
+
 function pinIcon(color: string, selected: boolean) {
-  const key = `drop-${color}-${selected ? "s" : "n"}`;
+  const key = `pin-${color}-${selected ? "s" : "n"}`;
   const hit = iconCache.get(key);
   if (hit) return hit;
-  const w = selected ? 28 : 22;
-  const h = selected ? 38 : 30;
-  const icon = L.divIcon({
-    className: `bl-marker${selected ? " is-selected" : ""}`,
-    html: `<span class="bl-drop" style="--pin:${color}"><svg viewBox="0 0 24 32" width="${w}" height="${h}" aria-hidden="true"><path fill="${color}" stroke="#ffffff" stroke-width="1.7" stroke-linejoin="round" d="M12 1.5C12 1.5 3.5 12.2 3.5 19.2a8.5 8.5 0 0 0 17 0C20.5 12.2 12 1.5 12 1.5z"/><circle cx="12" cy="19.2" r="3.2" fill="#ffffff"/></svg></span>`,
-    iconSize: [w, h],
-    iconAnchor: [w / 2, h - 2],
-  });
+  // Trefferfläche 44 px, sichtbarer Kreis 26/34 px (Tesla-Stil).
+  // Ausgewählt: großer Tropfen-Pin (eigenes SVG), Spitze auf dem Ort.
+  const icon = selected
+    ? L.divIcon({
+        className: "bl-marker is-selected",
+        html: `<span class="bl-pin bl-sel" style="--pin:${color}"><svg viewBox="0 0 52 72" width="44" height="61" aria-hidden="true"><path fill="${color}" d="M26 70C26 70 3 41 3 25a23 23 0 0 1 46 0C49 41 26 70 26 70z"/><path fill="#ffffff" transform="translate(15 12) scale(0.92)" d="M12 2.5S5.5 10.4 5.5 15a6.5 6.5 0 0 0 13 0C18.5 10.4 12 2.5 12 2.5z"/></svg></span>`,
+        iconSize: [44, 61],
+        iconAnchor: [22, 60],
+      })
+    : L.divIcon({
+        className: "bl-marker",
+        html: `<span class="bl-pin" style="--pin:${color}">${DROP_GLYPH}</span>`,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+      });
   iconCache.set(key, icon);
   return icon;
 }
@@ -64,14 +75,12 @@ function clusterIcon(count: number) {
   const key = `cdrop-${count}`;
   const hit = iconCache.get(key);
   if (hit) return hit;
-  const w = count >= 100 ? 36 : count >= 20 ? 30 : 26;
-  const h = Math.round((w * 32) / 24);
-  const fs = count >= 100 ? 8 : 10;
+  const size = count >= 100 ? "l" : count >= 20 ? "m" : "s";
   const icon = L.divIcon({
     className: "bl-marker bl-cluster",
-    html: `<span class="bl-drop"><svg viewBox="0 0 24 32" width="${w}" height="${h}" aria-hidden="true"><path fill="#e11d2e" stroke="#ffffff" stroke-width="1.7" stroke-linejoin="round" d="M12 1.5C12 1.5 3.5 12.2 3.5 19.2a8.5 8.5 0 0 0 17 0C20.5 12.2 12 1.5 12 1.5z"/><text x="12" y="21.2" text-anchor="middle" fill="#ffffff" font-size="${fs}" font-weight="700" font-family="Inter,system-ui,sans-serif">${count}</text></svg></span>`,
-    iconSize: [w, h],
-    iconAnchor: [w / 2, h - 2],
+    html: `<span class="bl-cl bl-cl-${size}">${count}</span>`,
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
   });
   iconCache.set(key, icon);
   return icon;
@@ -317,7 +326,7 @@ function ClusterLayer({ stations }: { stations: Station[] }) {
     if (!s) return null;
     if (s.id === selectedId) selectedInView = true;
     const status = deriveStatus(s, serverToLocal(s.id, serverReports[s.id], reports[s.id]));
-    const color = isCampsite(s) ? "#16a34a" : STATUS_COLOR[status];
+    const color = isCampsite(s) ? CAMPSITE_COLOR : STATUS_COLOR[status];
     const placeLabel = [s.postalCode, s.city].filter(Boolean).join(" ");
     return (
       <Marker
@@ -332,7 +341,7 @@ function ClusterLayer({ stations }: { stations: Station[] }) {
         }}
         zIndexOffset={s.id === selectedId ? 1000 : 0}
       >
-        <Tooltip direction="top" offset={[0, -14]} opacity={1} className="bl-map-tooltip">
+        <Tooltip direction="top" offset={[0, -18]} opacity={1} className="bl-map-tooltip">
           <span className="bl-map-tooltip-name">{s.name}</span>
           {placeLabel ? <span className="bl-map-tooltip-place">{placeLabel}</span> : null}
         </Tooltip>
@@ -342,7 +351,7 @@ function ClusterLayer({ stations }: { stations: Station[] }) {
 
   if (selected && hasPreciseCoords(selected) && !selectedInView) {
     const status = deriveStatus(selected, serverToLocal(selected.id, serverReports[selected.id], reports[selected.id]));
-    const color = isCampsite(selected) ? "#16a34a" : STATUS_COLOR[status];
+    const color = isCampsite(selected) ? CAMPSITE_COLOR : STATUS_COLOR[status];
     nodes.push(
       <Marker
         key={`sel-${selected.id}`}
@@ -356,7 +365,7 @@ function ClusterLayer({ stations }: { stations: Station[] }) {
         }}
         zIndexOffset={2000}
       >
-        <Tooltip direction="top" offset={[0, -14]} opacity={1} className="bl-map-tooltip" permanent>
+        <Tooltip direction="top" offset={[0, -58]} opacity={1} className="bl-map-tooltip" permanent>
           <span className="bl-map-tooltip-name">{selected.name}</span>
         </Tooltip>
       </Marker>,
@@ -370,8 +379,9 @@ function ClusterLayer({ stations }: { stations: Station[] }) {
 function VectorLabels() {
   const map = useMap();
   const mapLabels = useAppStore((s) => s.mapLabels);
+  const mapStyle = useAppStore((s) => s.mapStyle);
   useEffect(() => {
-    if (!mapLabels) return;
+    if (!mapLabels || mapStyle !== "sat" || !hasWebGL()) return;
     if (!map.getPane("bl-labels")) {
       const pane = map.createPane("bl-labels");
       pane.style.zIndex = "350";
@@ -379,7 +389,7 @@ function VectorLabels() {
     }
     let disposed = false;
     let layer: L.Layer | null = null;
-    void Promise.all([import("@maplibre/maplibre-gl-leaflet"), import("maplibre-gl/dist/maplibre-gl.css")]).then(([{ default: maplibreGL }]) => {
+    void Promise.all([import("@maplibre/maplibre-gl-leaflet"), import("maplibre-gl/dist/maplibre-gl.css"), import("@/lib/maplibre-worker")]).then(([{ default: maplibreGL }]) => {
       if (disposed) return;
       const nextLayer = maplibreGL({
         style: SAT_LABEL_STYLE,
@@ -399,12 +409,84 @@ function VectorLabels() {
       disposed = true;
       if (layer) map.removeLayer(layer);
     };
-  }, [map, mapLabels]);
+  }, [map, mapLabels, mapStyle]);
   return null;
 }
 
 const ESRI_WORLD = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+// EOxCloudless 2016 (CC BY 4.0, ohne Key/Konto; Attribution Pflicht). Quelle: tiles.maps.eox.at WMTS.
+const EOX_S2_2016 = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg";
+const EOX_ATTR =
+  'Satellit: <a href="https://cloudless.eox.at" target="_blank" rel="noopener">EOxCloudless</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> · Namen <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 const ESRI_CLARITY = "https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+/** Gestochen scharfe Vektor-Basiskarte (MapLibre GL, WebGL, rendert mit devicePixelRatio). */
+function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
+  const map = useMap();
+  useEffect(() => {
+    let disposed = false;
+    let layer: L.Layer | null = null;
+    void Promise.all([import("@maplibre/maplibre-gl-leaflet"), import("maplibre-gl/dist/maplibre-gl.css"), import("@/lib/maplibre-worker")]).then(([{ default: maplibreGL }]) => {
+      if (disposed) return;
+      try {
+        const next = maplibreGL({
+          style: baseStyle(dark ? "dark" : "light"),
+          interactive: false,
+          attribution: BASE_ATTRIBUTION,
+          attributionControl: false,
+          zoomLevelsToOverscale: 8,
+        } as Parameters<typeof maplibreGL>[0]);
+        layer = next;
+        if (import.meta.env.VITE_BL_DEBUG) (window as unknown as Record<string, unknown>).__blgl = next;
+        next.addTo(map);
+        map.attributionControl?.addAttribution(BASE_ATTRIBUTION);
+        const gl = (next as unknown as { getMaplibreMap?: () => { on: (e: string, f: (ev: { error?: Error }) => void) => void } }).getMaplibreMap?.();
+        gl?.on("error", (ev) => {
+          // Einzelne fehlende Kacheln ignorieren; nur Kontextverlust → Fallback.
+          if (ev?.error && /webgl/i.test(String(ev.error.message))) onFail();
+        });
+        const canvas = next.getContainer();
+        if (canvas) {
+          canvas.dataset.blVector = "1";
+          canvas.addEventListener("webglcontextlost", onFail);
+        }
+      } catch {
+        onFail();
+      }
+    }).catch(onFail);
+    return () => {
+      disposed = true;
+      map.attributionControl?.removeAttribution(BASE_ATTRIBUTION);
+      if (layer) map.removeLayer(layer);
+    };
+  }, [map, dark, onFail]);
+  return null;
+}
+
+function useDarkScheme() {
+  const q = "(prefers-color-scheme: dark)";
+  const [dark, setDark] = useState(() => typeof matchMedia === "function" && matchMedia(q).matches);
+  useEffect(() => {
+    const m = matchMedia(q);
+    const on = () => setDark(m.matches);
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  }, []);
+  return dark;
+}
+
+function useOnline() {
+  const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine !== false);
+  useEffect(() => {
+    const on = () => setOnline(navigator.onLine !== false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", on);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", on);
+    };
+  }, []);
+  return online;
+}
 
 export function StationMap({
   stations,
@@ -415,6 +497,16 @@ export function StationMap({
 }) {
   const userPos = useAppStore((s) => s.userPos);
   const satClarity = useAppStore((s) => s.satClarity);
+  const mapStyle = useAppStore((s) => s.mapStyle);
+  const dark = useDarkScheme();
+  const online = useOnline();
+  // Offline gespeicherte Kacheln sind Satellit → offline bleibt Satellit sichtbar.
+  const [glOk, setGlOk] = useState(() => hasWebGL());
+  const onGlFail = useMemo(() => () => setGlOk(false), []);
+  // Offline: bisher gespeicherte Esri-Kacheln (unverändertes Altverhalten).
+  const legacySat = !online;
+  // Satellit auf Wunsch oder als Fallback ohne WebGL (EOX Sentinel-2 cloudless 2016, CC BY 4.0).
+  const sat = mapStyle === "sat" || !glOk;
   const [heading, setHeading] = useState<number | null>(null);
   useEffect(() => {
     const onOri = (e: DeviceOrientationEvent) => {
@@ -452,20 +544,30 @@ export function StationMap({
       minZoom={1}
       maxZoom={22}
     >
-      <TileLayer
-        attribution='Satellit &copy; <a href="https://www.esri.com/">Esri</a>, Maxar · Straßen &copy; Esri · Namen &copy; <a href="https://openfreemap.org/">OpenFreeMap</a> / OSM'
-        url={satClarity ? ESRI_CLARITY : ESRI_WORLD}
-        maxZoom={22}
-        maxNativeZoom={19}
-        detectRetina
-      />
-      <TileLayer
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"
-        maxZoom={22}
-        maxNativeZoom={19}
-        detectRetina
-        opacity={0.88}
-      />
+      {legacySat ? (
+        <>
+          <TileLayer
+            key="sat"
+            attribution='Satellit &copy; <a href="https://www.esri.com/">Esri</a>, Maxar · Straßen &copy; Esri · Namen &copy; <a href="https://openfreemap.org/">OpenFreeMap</a> / OSM'
+            url={satClarity ? ESRI_CLARITY : ESRI_WORLD}
+            maxZoom={22}
+            maxNativeZoom={19}
+            detectRetina
+          />
+          <TileLayer
+            key="sat-roads"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"
+            maxZoom={22}
+            maxNativeZoom={19}
+            detectRetina
+            opacity={0.88}
+          />
+        </>
+      ) : sat ? (
+        <TileLayer key="eox" attribution={EOX_ATTR} url={EOX_S2_2016} maxZoom={22} maxNativeZoom={15} detectRetina className="bl-sat" />
+      ) : (
+        <VectorBase dark={dark} onFail={onGlFail} />
+      )}
       <VectorLabels />
       <MapChrome stations={stations} initialView={initialView} />
       {searchOrigin && radiusKm > 0 && !routeLine ? (
@@ -473,11 +575,11 @@ export function StationMap({
           center={[searchOrigin.lat, searchOrigin.lng]}
           radius={radiusKm * 1000}
           pathOptions={{
-            color: "#ffffff",
+            color: "#1f5fd1",
             weight: 1.5,
-            opacity: 0.7,
-            fillColor: "#14c4d4",
-            fillOpacity: 0.12,
+            opacity: 0.6,
+            fillColor: "#1f5fd1",
+            fillOpacity: 0.06,
           }}
         />
       ) : null}
@@ -485,7 +587,7 @@ export function StationMap({
         <Polyline
           positions={routeLine}
           pathOptions={{
-            color: routePath?.source === "straight" ? "#f5c84c" : "#7ef0ea",
+            color: routePath?.source === "straight" ? "#b45309" : "#1f5fd1",
             weight: 5,
             opacity: 0.92,
           }}

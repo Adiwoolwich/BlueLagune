@@ -96,6 +96,8 @@ type AppState = {
   extraStations: Station[];
   sheet: "peek" | "mid" | "full";
   mapLabels: boolean;
+  mapStyle: "map" | "sat";
+  setMapStyle: (v: "map" | "sat") => void;
   satClarity: boolean;
   listSort: "distance" | "name" | "verified" | "along";
   filtersOpen: boolean;
@@ -151,6 +153,7 @@ export const useAppStore = create<AppState>()(
       extraStations: [],
       sheet: "mid",
       mapLabels: true,
+      mapStyle: "map",
       satClarity: false,
       listSort: "distance",
       filtersOpen: false,
@@ -195,6 +198,7 @@ export const useAppStore = create<AppState>()(
         }),
       setSheet: (sheet) => set({ sheet }),
       setMapLabels: (mapLabels) => set({ mapLabels }),
+      setMapStyle: (mapStyle) => set({ mapStyle }),
       setSatClarity: (satClarity) => set({ satClarity }),
       setListSort: (listSort) => set({ listSort }),
       setFiltersOpen: (filtersOpen) => set({ filtersOpen }),
@@ -228,6 +232,7 @@ export const useAppStore = create<AppState>()(
         reports: s.reports,
         notes: s.notes,
         extraStations: s.extraStations,
+        mapStyle: s.mapStyle,
       }),
     },
   ),

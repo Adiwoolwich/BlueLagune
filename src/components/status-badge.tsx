@@ -39,12 +39,16 @@ export function StatusBadge({
   );
 }
 
+// Markerfarben (Tesla-Stil: runde Pins, klare Semantik). Rot ausschließlich für „defekt".
 export const STATUS_COLOR: Record<string, string> = {
-  confirmed: "#e11d2e",
-  stale: "#f59e0b",
-  broken: "#7f1d1d",
-  closed: "#52525b",
-  unknown: "#a1a1aa",
-  open: "#e11d2e",
-  limited: "#f59e0b",
+  confirmed: "#1a9e8f",
+  stale: "#c27803",
+  broken: "#e5484d",
+  closed: "#5f5f60",
+  unknown: "#3e6ae1",
+  open: "#1a9e8f",
+  limited: "#c27803",
 };
+export const CAMPSITE_COLOR = "#15803d";
+/** Kartengrund der Basiskarte (hell/dunkel) für Kontrastprüfung. */
+export const MARKER_BG = { light: "#efefef", dark: "#262626" };

@@ -1,6 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, MapPin, X } from "lucide-react";
+import { Check, ChevronDown, MapPin, Search, X } from "lucide-react";
 import { findCity, searchCities, CITIES, cityKey, registerCity, type City } from "@/lib/cities";
 import { searchNominatimDe } from "@/lib/nominatim";
 import { t, useLang } from "@/lib/i18n";
@@ -246,13 +246,15 @@ export function CitySelect({
       ) : null}
       <div
         className={cn(
-          "flex items-center gap-2 rounded-full ring-1",
-          compactMenu ? "bl-tap h-11 bg-black/80 px-4 ring-white/12" : "h-11 bg-surface px-3 ring-border",
+          "flex items-center gap-2 ring-1",
+          compactMenu ? "bl-tap h-11 rounded-[10px] bg-chrome px-4 text-chrome-fg shadow-[var(--shadow-btn)] ring-border" : "h-11 rounded-full bg-surface px-3 ring-border",
           open && "ring-2 ring-fg/25",
           warnUnmatched && unmatched && open === false && draft.trim() && "ring-2 ring-bad/60",
         )}
       >
-        {compactMenu ? null : (
+        {compactMenu ? (
+          <Search className="size-4 shrink-0 text-muted" aria-hidden />
+        ) : (
           <MapPin className="size-4 shrink-0 text-muted" />
         )}
         <input
@@ -296,7 +298,7 @@ export function CitySelect({
               setOpen(false);
             }
           }}
-          className={cn("min-w-0 flex-1 bg-transparent text-fg outline-none", compactMenu ? "text-center text-[15px] font-medium placeholder:text-fg/90" : "text-base placeholder:text-subtle md:text-sm")}
+          className={cn("h-11 min-w-0 flex-1 bg-transparent text-fg outline-none", compactMenu ? "text-left text-[15px] placeholder:text-muted" : "text-base placeholder:text-subtle md:text-sm")}
         />
         {allowEmpty && (value || draft) ? (
           <button
@@ -305,7 +307,7 @@ export function CitySelect({
             onClick={clear}
             className={cn(
               "bl-tap grid shrink-0 place-items-center text-muted hover:text-fg",
-              compactMenu ? "size-9 rounded-full" : "size-11 rounded-md",
+              compactMenu ? "-mr-3 size-11 rounded-full" : "size-11 rounded-md",
             )}
             aria-label={t("clearPlace")}
           >

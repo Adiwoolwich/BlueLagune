@@ -11,6 +11,8 @@ export default defineConfig({
       "~": path.resolve(__dirname, "./src"),
     },
   },
+  // MapLibre 6 startet seinen Worker als ES-Modul; Vite muss ihn samt Abhängigkeiten bündeln.
+  worker: { format: "es" },
   build: {
     outDir: "dist",
   },

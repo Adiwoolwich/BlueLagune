@@ -12,7 +12,7 @@ import { FeedbackPage } from "./components/feedback-form";
 import { DUMP_STATIONS, hasPreciseCoords } from "./lib/stations";
 import { allStations, applyFilters, useAppStore } from "./lib/store";
 import { inBounds } from "./lib/geo";
-import { hasMapDeepLink, parseUrl } from "./lib/url-state";
+import { parseUrl } from "./lib/url-state";
 import { fetchReports } from "./lib/reports";
 import { t, useLang } from "./lib/i18n";
 import { cn } from "./lib/utils";
@@ -296,7 +296,7 @@ function SheetHandle({
       role="button"
       tabIndex={0}
       aria-label={label}
-      className="flex h-8 shrink-0 touch-none select-none items-center justify-center pt-1"
+      className="bl-sheet-handle flex h-11 shrink-0 touch-none select-none items-center justify-center pt-1"
       style={{ touchAction: "none" }}
       onPointerDown={(e) => {
         e.preventDefault();
@@ -318,7 +318,7 @@ function SheetHandle({
         }
       }}
     >
-      <span className="h-1 w-10 rounded-full bg-zinc-500" />
+      <span className="h-1 w-10 rounded-full bg-border-strong" />
     </div>
   );
 }
@@ -336,14 +336,8 @@ function MapApp() {
   useEffect(() => installTapHaptic(), []);
   const initial = useMemo(() => parseUrl(), []);
   const [openOffline, setOpenOffline] = useState(false);
-  const [showLanding, setShowLanding] = useState(() => {
-    if (hasMapDeepLink()) return false;
-    try {
-      return localStorage.getItem(SKIP_KEY) !== "1";
-    } catch {
-      return true;
-    }
-  });
+  // Tesla-Prinzip: Karte sofort sichtbar. Die Infoseite bleibt über „‹" erreichbar.
+  const [showLanding, setShowLanding] = useState(false);
 
   const stations = useFilteredStations();
   const panel = useAppStore((s) => s.panel);
@@ -427,30 +421,30 @@ function MapApp() {
         <MapHost stations={stations} initialView={initial} />
         <div
           data-bl-keep-clear
-          className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-2.5 px-3 pb-2 pt-[max(0.7rem,env(safe-area-inset-top))]"
+          className="bl-topbar pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-2 px-3 pb-2 pt-[max(0.7rem,env(safe-area-inset-top))]"
         >
           <button
             type="button"
-            className="bl-tap pointer-events-auto size-11 shrink-0 rounded-[10px] bg-black/80 text-white ring-1 ring-white/15"
+            className="bl-tap pointer-events-auto size-11 shrink-0 rounded-[10px] bg-chrome text-chrome-fg shadow-[var(--shadow-btn)] ring-1 ring-border"
             aria-label={t("back")}
             onClick={() => setShowLanding(true)}
           >
             <span className="text-lg leading-none">‹</span>
           </button>
-          <div className="pointer-events-auto mx-auto min-w-0 w-full max-w-[min(58vw,22rem)]">
+          <div data-bl-search className="bl-search pointer-events-auto min-w-0 flex-1">
             <SearchBar overlay />
           </div>
           <OfflineNotice />
-          <span className="size-11 shrink-0" aria-hidden />
+          <span className="size-11 shrink-0 lg:hidden" aria-hidden />
         </div>
-        <div className="pointer-events-auto absolute right-3 top-[12dvh] z-30">
+        <div data-bl-rail className="pointer-events-auto absolute right-3 top-[max(4.5rem,9dvh)] z-30 lg:right-4 lg:top-4">
           <MapRoundButtons offlineOpen={openOffline} />
         </div>
       </main>
 
       <aside
         ref={sheetRef}
-        className="absolute inset-x-0 bottom-0 z-20 flex h-[90dvh] min-h-0 flex-col rounded-t-[1.25rem] bg-black transition-transform duration-150 ease-out"
+        className="bl-sheet absolute inset-x-0 bottom-0 z-20 flex h-[90dvh] min-h-0 flex-col rounded-t-[1.25rem] bg-sheet text-fg shadow-[0_-4px_18px_rgb(0_0_0/0.12)] transition-transform duration-150 ease-out"
         style={{
           transform: "translate3d(0, var(--sheet-offset), 0)",
           "--sheet-offset": (sheetSnaps().full - sheetH(sheet)) + "dvh",
