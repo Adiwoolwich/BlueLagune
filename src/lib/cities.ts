@@ -46,8 +46,8 @@ type PlacesFile = {
   z: [string, number, number, number][];
 };
 
-const dataDe = rawDe as PlacesFile;
-const dataNl = rawNl as PlacesFile;
+const dataDe = rawDe as unknown as PlacesFile;
+const dataNl = rawNl as unknown as PlacesFile;
 
 const EXTRA_ALIASES: Record<string, string[]> = {
   "Frankfurt am Main": ["Frankfurt", "Frankfurt/Main", "Frankfurt a. M.", "Frankfurt a.M."],

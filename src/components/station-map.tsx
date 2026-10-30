@@ -400,7 +400,8 @@ function VectorLabels() {
         // MapLibre 6 default (4) splits tiles above source maxzoom 14 and
         // fetches empty z15 OpenFreeMap 200s. 8 keeps covering at z14 overscale.
         zoomLevelsToOverscale: 8,
-      });
+        // pane wird von maplibre-gl-leaflet unterstützt, fehlt aber in den Typen
+      } as Parameters<typeof maplibreGL>[0]);
       layer = nextLayer;
       nextLayer.addTo(map);
       const canvas = nextLayer.getContainer();
@@ -429,6 +430,8 @@ function VectorBase({ dark, onFail }: { dark: boolean; onFail: () => void }) {
           attribution: BASE_ATTRIBUTION,
           attributionControl: false,
           zoomLevelsToOverscale: 8,
+        // pane wird von maplibre-gl-leaflet unterstützt, fehlt aber in den Typen
+
         } as Parameters<typeof maplibreGL>[0]);
         layer = next;
         if (import.meta.env.VITE_BL_DEBUG) (window as unknown as Record<string, unknown>).__blgl = next;
