@@ -1041,3 +1041,4 @@ export function hoursLine(station: Station): string | null {
 }
 
 void HOURS_LABEL;
+export { de, en, nl };

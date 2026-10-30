@@ -1,17 +1,17 @@
 import { expect, test } from "@playwright/test";
 import { openMap } from "./helpers";
 
-test("keine Anfragen an Esri/ArcGIS – Karte, Satellit und offline", async ({ page, context }) => {
+test("ohne Einschalten keine Anfrage an Esri; ohne Key Satellit = EOX, offline keine Esri-Anfrage", async ({ page, context }) => {
   const bad: string[] = [];
   context.on("request", (r) => { if (/arcgis|esri/i.test(r.url())) bad.push(r.url()); });
   await openMap(page, { width: 390, height: 844, net: true, path: "/?lat=50.94&lng=6.96&z=12" });
   await page.waitForTimeout(1500);
+  expect(bad).toEqual([]);
   await page.locator("[data-bl-maptype]").click();
-  await page.waitForTimeout(1500);
+  await expect(page.locator(".leaflet-control-attribution")).toContainText("EOxCloudless");
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await page.waitForTimeout(1500);
-  await expect(page.locator(".leaflet-control-attribution")).not.toContainText(/Esri/i);
+  await page.waitForTimeout(1000);
   expect(bad).toEqual([]);
 });
 
