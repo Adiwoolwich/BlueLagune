@@ -101,7 +101,7 @@ function activeFilterCount(f: Filters): number {
   return GROUPS.flatMap((g) => g.items).filter((i) => f[i.key]).length + (f.radiusKm > 0 ? 1 : 0);
 }
 
-/* Zuletzt gesucht: im localStorage des Geräts (bl-recent-q), nicht an Server/Metrik. */
+/* Zuletzt gesucht: Verlauf bleibt lokal im localStorage (bl-recent-q), geht nicht an Server/Pro-Metrik; Ortssuche-Text geht an OSM Nominatim (s. DSE privacyGeoP). */
 /** Zuletzt gesucht – wie Konzept 2 (miniHard): gleicher Schlüssel bl-recent-q, max. 5, nur auf dem Gerät, löschbar. */
 export const RECENT_KEY = "bl-recent-q";
 function readRecent(): string[] {

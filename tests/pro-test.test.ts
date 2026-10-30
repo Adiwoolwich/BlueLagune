@@ -46,7 +46,7 @@ describe("Testseite Pro Europa (Fake Door, ohne Zahlung, ohne Daten, ohne Tracki
     expect(PRO_TEXT.en.faq.find(([q]) => q === "What do you store?")![1]).toBe("Only anonymous daily totals, nothing personal.");
   });
   it("DSE-Satz Tageszähler: DE wörtlich nach Lex, EN/NL vorhanden, in der Datenschutzseite", () => {
-    expect(de.privacyProP).toBe("Anonyme Tageszähler (Test „Pro Europa“): Wenn dir der Hinweis „Pro Europa“ angezeigt wird, du auf „Interesse zeigen“ tippst oder welche Variante (Europa/Frankreich) du siehst, erhöht unser Server (Cloudflare Workers) einen Zähler für den jeweiligen Tag. Wir speichern dabei keine IP-Adresse, keinen Hash, keine Kennung und keine Cookies und lesen nichts aus deinem Gerätespeicher; deine IP-Adresse wird technisch bedingt nur kurz für die Übertragung verarbeitet. Es entstehen nur Summen pro Tag, die keinen Bezug zu dir haben. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (unser Interesse, herauszufinden, ob genug Nachfrage für Pro Europa besteht). Der Test endet am 27.11.2026.");
+    expect(de.privacyProP).toBe("Anonyme Tageszähler (Test „Pro Europa“): Wenn dir der Hinweis „Pro Europa“ angezeigt wird, du auf „Interesse zeigen“ tippst oder welche Variante (Europa/Frankreich) du siehst, erhöht unser Server (Cloudflare Workers) einen Zähler für den jeweiligen Tag. Wir speichern dabei keine IP-Adresse, keine Kennung und keine Cookies und lesen nichts aus deinem Gerätespeicher; deine IP-Adresse wird technisch bedingt nur kurz für die Übertragung verarbeitet. Nur zur Missbrauchsbegrenzung bilden wir einen kurzlebigen Tages-Hash deiner IP-Adresse (mit täglich wechselndem Zufallswert); er wird täglich um 00:00 UTC gelöscht. Es entstehen nur Summen pro Tag, die keinen Bezug zu dir haben. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (unser Interesse, herauszufinden, ob genug Nachfrage für Pro Europa besteht). Der Test endet am 27.11.2026.");
     expect(en.privacyProP).toContain("27.11.2026".replace(/(\d+)\.(\d+)\.(\d+)/, "$1/$2/$3"));
     expect(readFileSync("src/components/legal-pages.tsx", "utf8")).toContain('t("privacyProP")');
   });
@@ -63,7 +63,9 @@ describe("Testseite Pro Europa (Fake Door, ohne Zahlung, ohne Daten, ohne Tracki
     expect(m).toMatch(/METRIC_EVENTS = new Set\(\["pro_chip_seen", "pro_interest"\]\)/);
     const w = readFileSync("worker.ts", "utf8");
     const block = w.slice(w.indexOf('"/api/metric"'), w.indexOf('"/admin/pro"'));
-    expect(block).not.toMatch(/console\.|CF-Connecting-IP|countVisit|hash/i);
+    // Seit Verify-Auflage 048904c: einziger Hash-Bezug ist der Tages-Hash fürs Rate-Limit (hashedIp, wie feedback-rl).
+    expect(block).not.toMatch(/console\.|countVisit/i);
+    expect(block.replace(/await hashedIp\(env, request\.headers\.get\("CF-Connecting-IP"\)\)/, "").replace(/x-bl-rl-hash|rlHash|Tages-Hash|hashedIp\/Salt/g, "")).not.toMatch(/CF-Connecting-IP|hash/i);
     const pm = readFileSync("src/lib/pro-metric.ts", "utf8");
     expect(pm).not.toMatch(/localStorage|sessionStorage|document\.cookie|navigator\.(userAgent|language)/);
   });

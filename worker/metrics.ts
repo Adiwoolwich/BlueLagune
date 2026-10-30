@@ -40,6 +40,25 @@ export class MetricStore {
   }
 }
 
+/** Rate-Limit pro Tages-Hash (wie feedback-rl/st:rl:): Schlüssel st:rl:mt:<hash> (vom bestehenden 00:00-UTC-Alarm über st:rl: gelöscht), gleicher hashedIp/Salt.
+ *  Gelöscht vom bestehenden DO-Alarm 00:00 UTC (Präfix st:rl: in HASH_PREFIXES, visitors.ts unverändert) bzw. Rückfall beim Salt-Wechsel.
+ *  Grenzen je Hash und UTC-Tag: Chip gesehen 3× (mehrere Seitenaufrufe sind normal), Interesse 1× (eine Person = eine Stimme). */
+export const METRIC_RL_PREFIX = "st:rl:mt:";
+export const METRIC_RL_LIMITS: Record<string, number> = { pro_chip_seen: 3, pro_interest: 1 };
+const HASH_RE = /^[0-9a-f]{64}$/;
+
+/** true = zählen erlaubt (Zähler im Marker wird erhöht); false = Limit erreicht, nichts erhöhen. Ohne gültigen Hash: erlaubt (wie feedback-rl). */
+export async function allowMetric(kv: KV, hash: string | null | undefined, event: string): Promise<boolean> {
+  if (!hash || !HASH_RE.test(hash)) return true;
+  const key = `${METRIC_RL_PREFIX}${hash}`;
+  const rec = (await kv.get<Counts>(key)) ?? {};
+  const n = rec[event] ?? 0;
+  if (n >= (METRIC_RL_LIMITS[event] ?? 1)) return false;
+  rec[event] = n + 1;
+  await kv.put(key, rec);
+  return true;
+}
+
 export const proTestOn = (env: MetricEnv) => env.PRO_TEST !== "off";
 
 const plain = (status: number) => new Response(null, { status, headers: { "Cache-Control": "no-store" } });
@@ -57,13 +76,15 @@ export function parseMetric(body: string): [string, string] | null {
   return [e, v];
 }
 
-export async function handleMetric(request: Request, env: MetricEnv, store: MetricStore): Promise<Response> {
+/** rl: optional { kv, hash } – Tages-Hash vom Worker (hashedIp); bei Limit 429, Tageszähler bleibt unverändert. */
+export async function handleMetric(request: Request, env: MetricEnv, store: MetricStore, rl?: { kv: KV; hash: string | null }): Promise<Response> {
   if (!proTestOn(env)) return plain(404);
   if (request.method !== "POST") return plain(405);
   const len = Number(request.headers.get("Content-Length") ?? "0");
   if (len > MAX_BODY) return plain(400);
   const parsed = parseMetric((await request.text()).slice(0, MAX_BODY + 1));
   if (!parsed) return plain(400);
+  if (rl && !(await allowMetric(rl.kv, rl.hash, parsed[0]))) return plain(429);
   await store.add(parsed[0], parsed[1]);
   return plain(204);
 }

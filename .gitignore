@@ -33,3 +33,7 @@ dist
 test-results
 pids.txt
 dist-esri
+
+# Wrangler lokale Secrets
+.dev.vars
+.dev.vars.*
