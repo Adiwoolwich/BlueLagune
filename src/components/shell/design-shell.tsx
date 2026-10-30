@@ -12,8 +12,9 @@ import { copyShareUrl, shareUrl } from "../../lib/url-state";
 import { postReport } from "../../lib/reports";
 import { feeLabel, t, typeLabel, useLang } from "../../lib/i18n";
 import { cn } from "../../lib/utils";
-import { withSatConsent } from "../../lib/sat-preview";
-import { SatConsentPrompt } from "../sat-preview";
+import { useSatConsent, withSatConsent } from "../../lib/sat-preview";
+import { SatConsentPrompt, SatPreview } from "../sat-preview";
+import { Konzept1Shell } from "./konzept1";
 
 /*
  * Gerüst für ?design=* (Supercharger-Stil): Such-Pill, Chip-Leiste, Standort-FAB,
@@ -42,7 +43,7 @@ const TXT: Record<string, Record<Lang, string>> = {
   empty: { de: "Keine Station im Ausschnitt", en: "No station in view", nl: "Geen station in beeld" },
   save: { de: "Merken", en: "Save", nl: "Bewaren" },
 };
-function tx(k: keyof typeof TXT, lang: string, n?: number): string {
+export function tx(k: keyof typeof TXT, lang: string, n?: number): string {
   const v = TXT[k][(lang as Lang) in TXT[k] ? (lang as Lang) : "de"];
   return n == null ? v : v.replace("{n}", String(n));
 }
@@ -61,19 +62,19 @@ function useDesktop(): boolean {
   return on;
 }
 
-function useOrigin() {
+export function useOrigin() {
   const userPos = useAppStore((s) => s.userPos);
   const bounds = useAppStore((s) => s.bounds);
   return userPos ?? (bounds ? centerOfBounds(bounds) : null);
 }
 
 /** Grobe Fahrzeit: Luftlinie × 1,3 bei Ø 60 km/h (Schätzung, kein Routing). */
-function driveMin(km: number): string {
+export function driveMin(km: number): string {
   const min = Math.max(1, Math.round(((km * 1.3) / 60) * 60));
   return min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
 }
 
-function Badges({ s }: { s: Station }) {
+export function Badges({ s }: { s: Station }) {
   return (
     <span className="bl-g-badges">
       {s.hours === "24h" ? <span className="bl-g-badge bl-g-badge-warm">24h</span> : null}
@@ -177,7 +178,7 @@ function useNearby(stations: Station[]) {
   }, [stations, origin, bounds]);
 }
 
-function Carousel({ stations, onList }: { stations: Station[]; onList: () => void }) {
+export function Carousel({ stations, onList, sat }: { stations: Station[]; onList: () => void; sat?: boolean }) {
   const lang = useLang();
   const { list, total, origin } = useNearby(stations);
   const focusId = useAppStore((s) => s.focusId);
@@ -249,12 +250,13 @@ function Carousel({ stations, onList }: { stations: Station[]; onList: () => voi
                 type="button"
                 data-card={s.id}
                 aria-current={focusId === s.id ? "true" : undefined}
-                className="bl-g-card"
+                className={cn("bl-g-card", sat && "bl-g-card-sat")}
                 onClick={() => {
                   setFocus(s.id);
                   select(s.id);
                 }}
               >
+                {sat ? <SatPreview lat={s.lat} lng={s.lng} height={84} className="bl-g-card-satimg" /> : null}
                 <span className="bl-g-card-main">
                   <span className="bl-g-card-name">{s.city}</span>
                   <span className="bl-g-card-sub">{s.address || s.name}</span>
@@ -276,7 +278,7 @@ function Carousel({ stations, onList }: { stations: Station[]; onList: () => voi
 }
 
 /* ---------- Detailkarte ---------- */
-function DetailCard({ station, onMore, inline }: { station: Station; onMore: () => void; inline?: boolean }) {
+export function DetailCard({ station, onMore, inline, sat }: { station: Station; onMore: () => void; inline?: boolean; sat?: boolean }) {
   const lang = useLang();
   const select = useAppStore((s) => s.select);
   const mapView = useAppStore((s) => s.mapView) as MapView;
@@ -316,6 +318,7 @@ function DetailCard({ station, onMore, inline }: { station: Station; onMore: () 
 
   return (
     <section className={cn("bl-g-detail", inline && "bl-g-detail-inline")} data-bl-detail aria-label={station.name}>
+      {sat && hasPreciseCoords(station) ? <SatPreview lat={station.lat} lng={station.lng} height={128} /> : null}
       <div className="bl-g-detail-head">
         <div className="min-w-0">
           <p className="bl-g-kicker">{typeLabel(station.type)}</p>
@@ -371,7 +374,7 @@ function DetailCard({ station, onMore, inline }: { station: Station; onMore: () 
 }
 
 /* ---------- Volle Liste (mobil) ---------- */
-function ListOverlay({ stations, count, onClose }: { stations: Station[]; count: number; onClose: () => void }) {
+export function ListOverlay({ stations, count, onClose }: { stations: Station[]; count: number; onClose: () => void }) {
   const lang = useLang();
   const start = useRef<number | null>(null);
   return (
@@ -403,7 +406,24 @@ function Frame({ children }: { children: ReactNode }) {
   return <div className="relative h-dvh overflow-hidden bg-bg text-fg bl-g" data-chrome="map">{children}</div>;
 }
 
-export function DesignShell({ stations, initial, inViewCount, offlineOpen }: { stations: Station[]; initial: MapView & { id?: string | null }; inViewCount: number; offlineOpen?: boolean }) {
+export type ShellProps = { stations: Station[]; initial: MapView & { id?: string | null }; inViewCount: number; offlineOpen?: boolean; onLanding?: () => void; onGuide?: () => void };
+
+/** ?konzept= beim Laden lesen (url-state schreibt die URL später neu). */
+export const KONZEPT: string | null = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("konzept") : null;
+
+export function DesignShell(props: ShellProps) {
+  // Ohne Einwilligung (oder nach Widerruf) keine Satellitenansicht – auch nicht aus gespeichertem Zustand.
+  const consent = useSatConsent();
+  const mapStyle = useAppStore((s) => s.mapStyle);
+  const setMapStyle = useAppStore((s) => s.setMapStyle);
+  useEffect(() => {
+    if (!consent.allowed && mapStyle === "sat") setMapStyle("map");
+  }, [consent.allowed, mapStyle, setMapStyle]);
+  if (KONZEPT === "1" || KONZEPT === "a") return <Konzept1Shell {...props} />;
+  return <BaseShell {...props} />;
+}
+
+function BaseShell({ stations, initial, inViewCount, offlineOpen }: ShellProps) {
   useLang();
   const desktop = useDesktop();
   const panel = useAppStore((s) => s.panel);

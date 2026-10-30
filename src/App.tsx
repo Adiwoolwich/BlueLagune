@@ -19,7 +19,7 @@ import { cn } from "./lib/utils";
 import { installTapHaptic } from "./lib/tap";
 import { OfflineNotice } from "./components/offline-panel";
 import { BottomSheet } from "./components/BottomSheet";
-import { DesignShell } from "./components/shell/design-shell";
+import { DesignShell, KONZEPT } from "./components/shell/design-shell";
 
 const SKIP_KEY = "bl-skip-landing";
 
@@ -194,7 +194,14 @@ function MapApp() {
   const initial = useMemo(() => parseUrl(), []);
   const [openOffline, setOpenOffline] = useState(false);
   // Tesla-Prinzip: Karte sofort sichtbar. Die Infoseite bleibt über „‹" erreichbar.
-  const [showLanding, setShowLanding] = useState(false);
+  // Konzept 1 (?design=…&konzept=1): Landing wie in main beim ersten Besuch; sonst Karte sofort.
+  const [showLanding, setShowLanding] = useState(() => {
+    try {
+      return Boolean(document.documentElement.dataset.design) && (KONZEPT === "1" || KONZEPT === "a") && localStorage.getItem(SKIP_KEY) !== "1";
+    } catch {
+      return false;
+    }
+  });
 
   const stations = useFilteredStations();
   const panel = useAppStore((s) => s.panel);
@@ -239,7 +246,12 @@ function MapApp() {
 
   // Neues Gerüst nur bei ?design=* (Tokens gesetzt); ohne Parameter bleibt alles wie bisher.
   if (typeof document !== "undefined" && document.documentElement.dataset.design) {
-    return <DesignShell stations={stations} initial={initial} inViewCount={inViewCount} offlineOpen={openOffline} />;
+    return (
+      <>
+        <DesignShell stations={stations} initial={initial} inViewCount={inViewCount} offlineOpen={openOffline} onGuide={() => setGuide(true)} onLanding={() => setShowLanding(true)} />
+        {guide ? <GuideOverlay onClose={() => setGuide(false)} /> : null}
+      </>
+    );
   }
 
   return (
