@@ -50,7 +50,10 @@ describe("Satellit: eine Konfigurationsstelle, Esri mit Key, EOX als Rückfall",
     expect(readFileSync("src/components/station-map.tsx", "utf8")).not.toMatch(/tiles\.maps\.eox\.at|arcgis/);
   });
   it("Datenschutz-Baustein Satellit in DE/EN/NL", () => {
-    expect(de.privacySatP).toContain("Wenn Sie die Satellitenansicht aktivieren");
+    expect(de.privacySatP).toContain("Wenn du die Satellitenansicht aktivierst");
+    expect(de.privacySatP).not.toMatch(/\b(Sie|Ihr|Ihre|Ihren|Ihrem)\b/);
+    expect(nl.privacySatP).not.toMatch(/\b(u|uw)\b/);
+    expect(de.privacySatP).toContain("laut Anbieter");
     expect(de.privacySatP).toContain("Environmental Systems Research Institute, Inc., Redlands, USA");
     expect(en.privacySatP).toContain("satellite view");
     expect(nl.privacySatP).toContain("satellietweergave");
