@@ -35,6 +35,7 @@ export const SAT_LABEL_STYLE: StyleSpecification = {
   },
   glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
   sprite: "https://tiles.openfreemap.org/sprites/ofm_f384/ofm",
+  // Kollisionserkennung an (kein allow-overlap/ignore-placement), keine Punkt-Labels auf Linien: sonst Namen doppelt/mehrfach (K1-Bug 30.10.).
   layers: [
     {
       id: "background",
@@ -55,30 +56,6 @@ export const SAT_LABEL_STYLE: StyleSpecification = {
         "text-rotation-alignment": "map",
         "symbol-spacing": 160,
         "text-padding": 1,
-        "text-allow-overlap": true,
-        "text-ignore-placement": true,
-      },
-      paint: {
-        "text-color": WATER,
-        "text-halo-color": HALO,
-        "text-halo-width": HALO_W,
-      },
-    },
-    {
-      id: "waterway-point",
-      type: "symbol",
-      source: "openmaptiles",
-      "source-layer": "waterway",
-      minzoom: 12,
-      layout: {
-        "symbol-placement": "point",
-        "text-field": NAME,
-        "text-font": ["Noto Sans Regular"],
-        "text-size": 12,
-        "text-max-width": 8,
-        "text-padding": 0,
-        "text-allow-overlap": true,
-        "text-ignore-placement": true,
       },
       paint: {
         "text-color": WATER,
@@ -100,7 +77,6 @@ export const SAT_LABEL_STYLE: StyleSpecification = {
         "text-max-width": 8,
         "symbol-spacing": 120,
         "text-padding": 1,
-        "text-allow-overlap": true,
       },
       paint: {
         "text-color": WATER,
@@ -121,8 +97,6 @@ export const SAT_LABEL_STYLE: StyleSpecification = {
         "text-size": 13,
         "text-max-width": 8,
         "text-padding": 1,
-        "text-allow-overlap": true,
-        "text-ignore-placement": true,
       },
       paint: {
         "text-color": WATER,
@@ -151,8 +125,6 @@ export const SAT_LABEL_STYLE: StyleSpecification = {
         "text-optional": false,
         "text-max-width": 10,
         "text-padding": 0,
-        "text-allow-overlap": true,
-        "text-ignore-placement": true,
       },
       paint: {
         "text-color": "#f3e8ff",
@@ -176,8 +148,6 @@ export const SAT_LABEL_STYLE: StyleSpecification = {
         "text-optional": false,
         "text-max-width": 8,
         "text-padding": 0,
-        "text-allow-overlap": true,
-        "text-ignore-placement": true,
       },
       paint: {
         "text-color": "#d9f99d",
