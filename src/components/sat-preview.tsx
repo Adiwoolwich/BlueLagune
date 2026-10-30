@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SAT_ASK, SAT_PREVIEW, SAT_PREVIEW_MOCK, SAT_PREVIEW_POWERED, useSatPreviewSources, allowSat, askSat, l2, notNowSat, previewGrid, satAskVisible, useSatConsent } from "../lib/sat-preview";
-import { useLang } from "../lib/i18n";
+import { t, useLang } from "../lib/i18n";
 import { cn } from "../lib/utils";
 
 
@@ -31,7 +31,7 @@ function VectorMini({ seed }: { seed: number }) {
   );
 }
 
-export function SatPreview({ lat, lng, className, height = 112 }: { lat: number; lng: number; className?: string; height?: number }) {
+export function SatPreview({ lat, lng, className, height = 112, credit }: { lat: number; lng: number; className?: string; height?: number; credit?: boolean }) {
   const lang = useLang();
   const consent = useSatConsent();
   const [ref, visible] = useVisible<HTMLDivElement>();
@@ -66,6 +66,7 @@ export function SatPreview({ lat, lng, className, height = 112 }: { lat: number;
         />
       ) : null}
       <span className="bl-sat-pin" aria-hidden />
+      {live && credit ? <span className="bl-sat-credit" data-bl-sat-credit>© Esri</span> : null}
       {live ? (
         <span className="bl-sat-attr">
           {SAT_PREVIEW_MOCK ? <b className="bl-sat-mock">Mock · </b> : null}
@@ -76,15 +77,19 @@ export function SatPreview({ lat, lng, className, height = 112 }: { lat: number;
   );
 }
 
-/** Eine gemeinsame Quellenzeile für mehrere kleine Vorschauen (Desktop-Liste K1); gleicher Inhalt wie je Vorschau. */
+/** Eine gemeinsame Quellenzeile für die kleinen Vorschauen der Desktop-Liste (K1, Lex 30.10.):
+ *  „Satellitenbilder:“ + „Powered by Esri | <Bildquellen>“ (Fallback: Esri-Kette wörtlich), „Esri“ verlinkt. */
 export function SatPreviewAttribution({ className }: { className?: string }) {
+  useLang();
   const consent = useSatConsent();
   const sources = useSatPreviewSources(consent.allowed);
   if (!SAT_PREVIEW || !consent.allowed) return null;
   return (
     <p className={cn("bl-sat-attr-line", className)} data-bl-list-sat-attr>
       {SAT_PREVIEW_MOCK ? <b className="bl-sat-mock">Mock · </b> : null}
-      {SAT_PREVIEW_POWERED} | {sources}
+      {t("satImagery")} Powered by{" "}
+      <a href="https://www.esri.com" target="_blank" rel="noopener" className="bl-sat-attr-link" data-bl-esri-link>Esri</a>
+      {" | "}{sources}
     </p>
   );
 }

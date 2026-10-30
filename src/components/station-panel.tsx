@@ -426,7 +426,7 @@ function StationList({ stations }: { stations: Station[] }) {
               >
                 {satThumb ? (
                   <span className="bl-list-sat w-[88px] shrink-0" data-bl-list-sat>
-                    <SatPreview lat={s.lat} lng={s.lng} height={64} />
+                    <SatPreview lat={s.lat} lng={s.lng} height={64} credit />
                   </span>
                 ) : null}
                 <div className="min-w-0 flex-1">
@@ -459,7 +459,7 @@ function StationList({ stations }: { stations: Station[] }) {
           );
         })}
       </ul>
-      {satThumb ? <SatPreviewAttribution className="px-3 py-2 text-[11px] leading-snug text-muted" /> : null}
+      {satThumb ? <SatPreviewAttribution /> : null}
     </div>
   );
 }

@@ -76,3 +76,22 @@ describe("Punkt 1/4: Quelltext-Checks", () => {
     expect(src).toMatch(/\{satThumb \? \(/);
   });
 });
+
+describe("Esri-Quellenzeile Desktop-Liste (Lex 30.10.)", () => {
+  it("Präfix DE/EN über i18n", () => {
+    setLang("de");
+    expect(t("satImagery")).toBe("Satellitenbilder:");
+    setLang("en");
+    expect(t("satImagery")).toBe("Satellite imagery:");
+  });
+  it("Zeile: Esri-Link, Fallback-Kette wörtlich, © je Bild; CSS sticky, ≥ 12 px, Link ≥ 44 px", () => {
+    const src = readFileSync("src/components/sat-preview.tsx", "utf8");
+    expect(src).toMatch(/<a href="https:\/\/www\.esri\.com" target="_blank" rel="noopener"[^>]*>Esri<\/a>/);
+    expect(src).toMatch(/data-bl-sat-credit>© Esri</);
+    expect(readFileSync("src/components/station-panel.tsx", "utf8")).toMatch(/height=\{64\} credit/);
+    const css = readFileSync("src/theme/k1-tap.css", "utf8");
+    expect(css).toMatch(/\.bl-sat-attr-line \{ position: sticky; bottom: 0;[^}]*font-size: 12px/);
+    expect(css).toMatch(/\.bl-sat-attr-link \{[^}]*min-height: 44px; min-width: 44px/);
+    expect(readFileSync("src/lib/sat-preview.ts", "utf8")).toContain("Esri, Vantor, Earthstar Geographics, and the GIS User Community");
+  });
+});
