@@ -21,7 +21,7 @@ test("Datenschutz: Kapitel Satellitenvorschau mit Status und Widerruf (bl-sat-pr
   expect(await page.evaluate(() => [localStorage.getItem("bl-sat-preview"), sessionStorage.getItem("bl-sat-preview-later"), localStorage.getItem("bl-sat-preview-ok")])).toEqual([null, null, "1"]);
   // nur einmal im Dokument
   await expect(page.getByText("Satellitenvorschau und -karte (Esri ArcGIS)")).toHaveCount(1);
-  await expect(page.locator("body")).toContainText("Sie bleiben nur auf deinem Gerät und werden nicht an uns übertragen.");
+  await expect(page.locator("body")).toContainText("Local Storage: Filter, Merkliste, deine zuletzt eingegebenen Suchbegriffe („Zuletzt gesucht“) und deine Wahl zur Satellitenvorschau");
   await expect(page.locator("body")).toContainText("Anonyme Tageszähler (Test „Pro Europa“)");
   await expect(page.locator("[data-bl-privacy-visit]")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -71,3 +71,31 @@ for (const scheme of ["light", "dark"] as const) {
     expect(d[0]).not.toBe(d[1]);
   });
 }
+
+test("Datenschutz: Esri-Links im Kapitel klickbar, rel=noopener, Wortlaut unverändert, Tippfläche ≥ 44 px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/datenschutz");
+  const sec = page.locator("#satellitenvorschau");
+  for (const href of ["https://www.esri.com/en-us/privacy/privacy-statements/privacy-statement", "https://trust.arcgis.com/en/compliance/gdpr.htm"]) {
+    const a = sec.locator(`a[href="${href}"]`);
+    await expect(a).toHaveText(href);
+    await expect(a).toHaveAttribute("rel", /noopener/);
+    await expect(a).toHaveAttribute("target", "_blank");
+    const h = await a.evaluate((el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return { h: r.height, pad: parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) + parseFloat(s.lineHeight || "0") }; });
+    expect(Math.max(h.h, h.pad)).toBeGreaterThanOrEqual(43.5);
+  }
+  await expect(sec.locator("p").first()).toContainText("Mehr Infos: https://www.esri.com/en-us/privacy/privacy-statements/privacy-statement und https://trust.arcgis.com/en/compliance/gdpr.htm.");
+});
+
+test("Vorschau-Attribution im Mock: Powered by Esri + Fallback Vantor (formerly Maxar), kein Netz zu Esri", async ({ page }) => {
+  const esri: string[] = [];
+  page.on("request", (r) => { if (/arcgis|esri\.com/i.test(r.url())) esri.push(r.url()); });
+  await page.addInitScript(() => { localStorage.setItem("bl-skip-landing", "1"); localStorage.setItem("bl-sat-preview", "yes"); });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?lat=50.94&lng=6.96&z=11&design=teal&konzept=1");
+  const attr = page.locator(".bl-sat-attr").first();
+  await expect(attr).toBeVisible({ timeout: 15000 });
+  await expect(attr).toContainText("Powered by Esri | Vantor (formerly Maxar)");
+  await expect(attr).not.toContainText("Esri, Maxar");
+  expect(esri).toEqual([]);
+});

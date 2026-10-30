@@ -21,7 +21,7 @@ describe("Sat-Vorschau", () => {
   });
   it("Attribution", () => {
     expect(SAT_PREVIEW_POWERED).toBe("Powered by Esri");
-    expect(SAT_PREVIEW_ATTRIBUTION).toBe("Esri, Maxar, Earthstar Geographics");
+    expect(SAT_PREVIEW_ATTRIBUTION).toBe("Vantor (formerly Maxar)"); // Fallback; echt dynamisch aus copyrightText (Lead 13:30)
   });
 });
 
